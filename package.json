@@ -1,0 +1,40 @@
+{
+  "name": "allied-health-pdf-local-v0",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "npm run create-demo-template",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run create-demo-template",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "pretest": "npm run create-demo-template",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "lint": "npm run typecheck",
+    "inspect-pdf": "tsx scripts/inspect-pdf-fields.ts",
+    "create-demo-template": "node scripts/create-demo-template.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "pdf-lib": "^1.17.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^25.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

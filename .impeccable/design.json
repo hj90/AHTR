@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "northStar": "Clinical Intake Workbench",
+  "directionContract": {
+    "thesis": "Local clinical PDF filling as a controlled intake workbench, refusing a marketing dashboard or cloud workflow.",
+    "ownWorld": "Pale workstation surfaces, ink text, teal controls, red safety accent, thin dividers, compact rails, form rows.",
+    "story": "Clinician selects a demo form, enters data, reviews it, generates a browser-only PDF, and clears state.",
+    "firstViewport": "Header and privacy strip above a two-column workbench with section rail, active form, and visible primary action.",
+    "form": "Candidate 5, seed key 23d69c41"
+  },
+  "shadows": {
+    "workbenchPanel": "0 18px 38px rgba(21, 35, 31, 0.12)",
+    "primaryAction": "0 10px 24px rgba(15, 118, 110, 0.22)"
+  },
+  "breakpoints": {
+    "tablet": "860px",
+    "mobile": "620px"
+  },
+  "componentNotes": {
+    "buttons": "Icon plus text, 7px radius, 44px minimum height. Primary uses teal fill and white text.",
+    "forms": "One-column by default, bordered controls, row-style checkbox/radio choices, visible field errors.",
+    "sectionRail": "Sticky desktop rail, stacked tablet/mobile rail, active state in soft teal.",
+    "templatePreview": "Static PNG rendered from the active PDF, with a direct PDF link overlaid."
+  },
+  "notCanonized": [
+    "Browser PDF-plugin preview fallback is not part of the system; the shipped UI uses a generated PNG preview instead."
+  ]
+}
