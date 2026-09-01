@@ -4,3 +4,5 @@ test-results/
 playwright-report/
 .vite/
 .DS_Store
+public/templates/demo-allied-health-referral.pdf
+public/templates/demo-allied-health-referral-preview.png
