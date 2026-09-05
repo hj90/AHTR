@@ -15,7 +15,6 @@ describe('consult note parsing', () => {
           { fieldId: 'unknownField', value: 'ignored', needsReview: true },
         ],
         clinicalFlags: [],
-        notes: [],
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
     );
 
