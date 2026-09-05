@@ -15,6 +15,7 @@ interface FormScreenProps {
   onSectionChange: (sectionId: string) => void;
   onReview: () => void;
   onClear: () => void;
+  draftSummary?: string | null;
 }
 
 export function FormScreen({
@@ -26,6 +27,7 @@ export function FormScreen({
   onSectionChange,
   onReview,
   onClear,
+  draftSummary,
 }: FormScreenProps) {
   const errorCount = Object.keys(errors).length;
   const currentIndex = Math.max(
@@ -57,6 +59,8 @@ export function FormScreen({
       </header>
 
       <PrivacyNotice />
+
+      {draftSummary ? <div className="draft-summary" role="status">{draftSummary} Review every populated field before generating the PDF.</div> : null}
 
       {errorCount > 0 ? (
         <div className="error-summary" role="alert" aria-live="polite">

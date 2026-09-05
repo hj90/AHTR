@@ -20,6 +20,7 @@ import {
   savePractitionerSettings,
 } from './utils/practitionerSettings';
 import type { PractitionerSettings } from './utils/practitionerSettings';
+import { parseConsultNotes } from './utils/noteParser';
 
 type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
@@ -32,6 +33,7 @@ export default function App() {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [draftSummary, setDraftSummary] = useState<string | null>(null);
   const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
     loadPractitionerSettings,
   );
@@ -62,6 +64,24 @@ export default function App() {
     setValues(getNewFormValues(template, practitionerSettings));
     setErrors({});
     setGenerationError(null);
+    setDraftSummary(null);
+    setScreen('form');
+    setActiveSectionId(template.sections[0]?.id ?? null);
+    window.scrollTo({ top: 0 });
+  }
+
+  async function startFormFromNotes(notes: string) {
+    const baseValues = getNewFormValues(template, practitionerSettings);
+    const draft = await parseConsultNotes(notes, practitionerSettings, template);
+    setValues({ ...baseValues, ...draft.values });
+    setErrors({});
+    setGenerationError(null);
+    const reviewCount = draft.meta.reviewFieldIds.length;
+    const flagCount = draft.meta.clinicalFlags.length;
+    setDraftSummary(
+      `AI drafted ${Object.keys(draft.values).length} field${Object.keys(draft.values).length === 1 ? '' : 's'}. ` +
+      `${reviewCount} need${reviewCount === 1 ? 's' : ''} extra review${flagCount ? `; ${flagCount} clinical flag${flagCount === 1 ? '' : 's'} identified` : ''}.`,
+    );
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
     window.scrollTo({ top: 0 });
@@ -136,6 +156,7 @@ export default function App() {
     setGeneratedPdfUrl(clearedState.generatedPdfUrl);
     setErrors({});
     setGenerationError(null);
+    setDraftSummary(null);
     setActiveSectionId(template.sections[0]?.id ?? null);
     setScreen('form');
     window.scrollTo({ top: 0 });
@@ -149,7 +170,7 @@ export default function App() {
         onNavigate={setScreen}
         onToggle={toggleSidebar}
       >
-        <HomeScreen onStartBlank={startForm} onStartFromNotes={startForm} />
+        <HomeScreen onStartBlank={startForm} onStartFromNotes={startFormFromNotes} />
       </AppShell>
     );
   }
@@ -205,6 +226,7 @@ export default function App() {
       onSectionChange={changeSection}
       onReview={reviewForm}
       onClear={clearForm}
+      draftSummary={draftSummary}
     />
   );
 }

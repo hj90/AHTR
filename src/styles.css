@@ -1019,6 +1019,43 @@ dd {
   margin-top: 12px;
 }
 
+.ai-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.ai-consent input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
+.start-panel .draft-error {
+  margin-top: 10px;
+  color: var(--safety);
+  font-weight: 700;
+}
+
+.draft-summary {
+  margin-top: 18px;
+  border: 1px solid #bed8d2;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: #123c39;
+  padding: 13px 16px;
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
 .start-panel p {
   color: var(--ink-muted);
   font-size: 0.78rem;

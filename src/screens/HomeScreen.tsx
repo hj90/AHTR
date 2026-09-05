@@ -5,7 +5,7 @@ type StartMethod = 'notes' | 'blank' | 'cliniko';
 
 interface HomeScreenProps {
   onStartBlank: () => void;
-  onStartFromNotes: (notes: string) => void;
+  onStartFromNotes: (notes: string) => Promise<void>;
 }
 
 const choices: Array<{ id: StartMethod; label: string; note: string }> = [
@@ -17,6 +17,9 @@ const choices: Array<{ id: StartMethod; label: string; note: string }> = [
 export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) {
   const [method, setMethod] = useState<StartMethod>('blank');
   const [notes, setNotes] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   return (
     <main className="new-home-screen">
@@ -42,10 +45,30 @@ export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) 
           <div className="start-panel">
             <label htmlFor="consult-notes">Consult notes</label>
             <textarea id="consult-notes" rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Paste subjective, objective, treatment to date and plan notes here…" />
+            <label className="ai-consent">
+              <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
+              <span>I understand these clinical notes will be sent to OpenAI to create a draft and must be reviewed before use.</span>
+            </label>
+            {draftError ? <p className="draft-error" role="alert">{draftError}</p> : null}
             <div className="start-panel-actions">
               <p><strong>Experimental:</strong> automatic parsing may not fill fields yet. Anything missing remains blank.</p>
-              <button className="primary-action" type="button" onClick={() => onStartFromNotes(notes)} disabled={!notes.trim()}>
-                <ClipboardPaste aria-hidden="true" size={17} /> Draft form
+              <button
+                className="primary-action"
+                type="button"
+                onClick={async () => {
+                  setIsDrafting(true);
+                  setDraftError(null);
+                  try {
+                    await onStartFromNotes(notes);
+                  } catch (error) {
+                    setDraftError(error instanceof Error ? error.message : 'Unable to draft the form.');
+                  } finally {
+                    setIsDrafting(false);
+                  }
+                }}
+                disabled={!notes.trim() || !consent || isDrafting}
+              >
+                <ClipboardPaste aria-hidden="true" size={17} /> {isDrafting ? 'Drafting…' : 'Draft form'}
               </button>
             </div>
           </div>
