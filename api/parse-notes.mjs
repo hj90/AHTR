@@ -109,6 +109,7 @@ async function requestDraft(input) {
 }
 
 export default async function handler(request, response) {
+  const requestStarted = performance.now();
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST');
     return response.status(405).json({ error: 'Method not allowed.' });
@@ -127,11 +128,18 @@ export default async function handler(request, response) {
   const input = `<clinical_note>\n${clinicalNote}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n${JSON.stringify(practiceProfile)}\n</practice_profile>`;
 
   try {
+    const openAIStarted = performance.now();
     const apiResponse = await requestDraft(input);
+    const openAIMs = performance.now() - openAIStarted;
+    const parseStarted = performance.now();
     const payload = await apiResponse.json();
     const outputText = extractOutputText(payload);
     if (!outputText) return response.status(502).json({ error: 'The AI service returned no draft.' });
-    return response.status(200).json(JSON.parse(outputText));
+    const result = JSON.parse(outputText);
+    const parseMs = performance.now() - parseStarted;
+    const totalMs = performance.now() - requestStarted;
+    response.setHeader('Server-Timing', `openai;dur=${openAIMs.toFixed(1)}, parse;dur=${parseMs.toFixed(1)}, total;dur=${totalMs.toFixed(1)}`);
+    return response.status(200).json(result);
   } catch (error) {
     console.error('Unable to parse AHTR notes', error instanceof Error ? error.message : 'Unknown error');
     const timedOut = error?.name === 'TimeoutError' || error?.name === 'AbortError';
