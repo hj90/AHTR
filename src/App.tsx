@@ -231,6 +231,7 @@ export default function App() {
       activeSectionId={activeSectionId}
       onChange={updateField}
       onSectionChange={changeSection}
+      onBackHome={() => setScreen('home')}
       onReview={reviewForm}
       onClear={clearForm}
       draftSummary={draftSummary}
