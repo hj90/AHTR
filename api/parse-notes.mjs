@@ -23,7 +23,7 @@ const ALLOWED_FIELD_IDS = [
   ]),
 ];
 
-const AHTR_SYSTEM_PROMPT = `You are a clinical documentation assistant mapping an allied health practitioner's consultation notes onto the NSW SIRA Allied Health Treatment Request form.
+export const AHTR_SYSTEM_PROMPT = `You are a clinical documentation assistant mapping an allied health practitioner's consultation notes onto the NSW SIRA Allied Health Treatment Request form.
 
 Absolute rules:
 1. Extract and reshape only facts present in the delimited inputs. Never invent, assume, diagnose, upgrade, soften, or embellish clinical facts.
@@ -37,7 +37,7 @@ Absolute rules:
 9. Surface urgent or red-flag features in clinicalFlags without adding a diagnosis or advice. Keep each flag concise.
 10. Output only data matching the supplied JSON schema.`;
 
-const responseSchema = {
+export const responseSchema = {
   type: 'object',
   additionalProperties: false,
   properties: {
@@ -62,7 +62,7 @@ const responseSchema = {
 const OPENAI_TIMEOUT_MS = 20000;
 const MAX_ATTEMPTS = 2;
 
-function extractOutputText(response) {
+export function extractOutputText(response) {
   for (const item of response.output ?? []) {
     for (const content of item.content ?? []) {
       if (content.type === 'output_text' && typeof content.text === 'string') return content.text;
