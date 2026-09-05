@@ -1,4 +1,4 @@
-import { Check, Plug, ShieldCheck, Trash2 } from 'lucide-react';
+import { Plug, ShieldCheck, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { PractitionerSettings } from '../utils/practitionerSettings';
 
@@ -48,7 +48,6 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           <h1>Settings</h1>
           <p>Reusable practitioner and clinic details for new requests.</p>
         </div>
-        <span className="device-status"><Check size={15} /> Saved on this device</span>
       </header>
 
       <form

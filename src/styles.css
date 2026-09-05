@@ -928,15 +928,6 @@ dd {
   line-height: 1.5;
 }
 
-.device-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--accent-strong);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
 .start-section,
 .requests-empty,
 .settings-card,
