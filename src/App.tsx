@@ -78,9 +78,16 @@ export default function App() {
     setGenerationError(null);
     const reviewCount = draft.meta.reviewFieldIds.length;
     const flagCount = draft.meta.clinicalFlags.length;
+    const openAIMatch = draft.meta.serverTiming?.match(/openai;dur=([\d.]+)/);
+    const openAISeconds = openAIMatch ? Number(openAIMatch[1]) / 1000 : null;
+    const totalSeconds = draft.meta.clientMs / 1000;
+    const timingSummary = openAISeconds === null
+      ? ` Draft prepared in ${totalSeconds.toFixed(1)}s.`
+      : ` Draft prepared in ${totalSeconds.toFixed(1)}s (${openAISeconds.toFixed(1)}s AI processing).`;
     setDraftSummary(
       `AI drafted ${Object.keys(draft.values).length} field${Object.keys(draft.values).length === 1 ? '' : 's'}. ` +
-      `${reviewCount} need${reviewCount === 1 ? 's' : ''} extra review${flagCount ? `; ${flagCount} clinical flag${flagCount === 1 ? '' : 's'} identified` : ''}.`,
+      `${reviewCount} need${reviewCount === 1 ? 's' : ''} extra review${flagCount ? `; ${flagCount} clinical flag${flagCount === 1 ? '' : 's'} identified` : ''}.` +
+      timingSummary,
     );
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
