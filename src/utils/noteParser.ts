@@ -16,7 +16,6 @@ interface ParsedField {
 interface ParseResponse {
   fields?: ParsedField[];
   clinicalFlags?: string[];
-  notes?: string[];
   error?: string;
 }
 
@@ -51,7 +50,7 @@ export async function parseConsultNotes(
     meta: {
       reviewFieldIds,
       clinicalFlags: result.clinicalFlags ?? [],
-      notes: result.notes ?? [],
+      notes: [],
     },
   };
 }
