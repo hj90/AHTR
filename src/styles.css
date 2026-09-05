@@ -692,6 +692,40 @@ select[aria-invalid='true'] {
   text-decoration: none;
 }
 
+.form-header-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.form-request-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+}
+
+.form-back-home {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 4px 0;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.form-header-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+}
+
+.form-header-claim {
+  color: var(--accent-strong);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
 .primary-action {
   border: 1px solid var(--accent-strong);
   background: var(--accent);
