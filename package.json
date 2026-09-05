@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck",
+    "benchmark:notes": "node scripts/benchmark-note-parser.mjs",
     "inspect-pdf": "tsx scripts/inspect-pdf-fields.ts",
     "create-demo-template": "node scripts/create-demo-template.mjs"
   },
