@@ -29,12 +29,12 @@ Absolute rules:
 1. Extract and reshape only facts present in the delimited inputs. Never invent, assume, diagnose, upgrade, soften, or embellish clinical facts.
 2. A recorded negative is real content. A fact that is not mentioned must not be returned.
 3. Use claim_record only for administrative fields and practice_profile only for practitioner fields. Use them verbatim.
-4. Dates must be YYYY-MM-DD. Do not calculate relative dates unless an explicit anchor date is present; if calculated, explain it in reviewReason.
+4. Dates must be YYYY-MM-DD. Do not calculate relative dates unless an explicit anchor date is present.
 5. Do not assume whether this is the first AHTR. Do not impose a consultation cap. Do not complete insurer-only fields or create a signature.
 6. Return a field only when there is useful source content. Set needsReview true whenever the value required interpretation, synthesis, calculation, or uncertainty.
 7. For radio fields use these exact values: yes, no, partially, or na. Checkbox fields use booleans.
 8. Keep goals faithful to the patient's stated aims. You may make wording specific and measurable only from details already supplied.
-9. Surface urgent or red-flag features in clinicalFlags without adding a diagnosis or advice.
+9. Surface urgent or red-flag features in clinicalFlags without adding a diagnosis or advice. Keep each flag concise.
 10. Output only data matching the supplied JSON schema.`;
 
 const responseSchema = {
@@ -50,17 +50,17 @@ const responseSchema = {
           fieldId: { type: 'string', enum: ALLOWED_FIELD_IDS },
           value: { anyOf: [{ type: 'string' }, { type: 'boolean' }, { type: 'null' }] },
           needsReview: { type: 'boolean' },
-          sourceSnippet: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-          reviewReason: { anyOf: [{ type: 'string' }, { type: 'null' }] },
         },
-        required: ['fieldId', 'value', 'needsReview', 'sourceSnippet', 'reviewReason'],
+        required: ['fieldId', 'value', 'needsReview'],
       },
     },
     clinicalFlags: { type: 'array', items: { type: 'string' } },
-    notes: { type: 'array', items: { type: 'string' } },
   },
-  required: ['fields', 'clinicalFlags', 'notes'],
+  required: ['fields', 'clinicalFlags'],
 };
+
+const OPENAI_TIMEOUT_MS = 20000;
+const MAX_ATTEMPTS = 2;
 
 function extractOutputText(response) {
   for (const item of response.output ?? []) {
@@ -69,6 +69,43 @@ function extractOutputText(response) {
     }
   }
   return null;
+}
+
+function shouldRetry(status) {
+  return status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
+async function requestDraft(input) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const apiResponse = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+          store: false,
+          instructions: AHTR_SYSTEM_PROMPT,
+          input,
+          max_output_tokens: 4000,
+          text: { format: { type: 'json_schema', name: 'ahtr_prefill', strict: true, schema: responseSchema } },
+        }),
+      });
+
+      if (apiResponse.ok) return apiResponse;
+      lastError = new Error(`OpenAI request failed (${apiResponse.status})`);
+      if (!shouldRetry(apiResponse.status)) throw lastError;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
 }
 
 export default async function handler(request, response) {
@@ -90,32 +127,18 @@ export default async function handler(request, response) {
   const input = `<clinical_note>\n${clinicalNote}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n${JSON.stringify(practiceProfile)}\n</practice_profile>`;
 
   try {
-    const apiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-5-mini',
-        store: false,
-        instructions: AHTR_SYSTEM_PROMPT,
-        input,
-        text: { format: { type: 'json_schema', name: 'ahtr_prefill', strict: true, schema: responseSchema } },
-      }),
-    });
-
-    if (!apiResponse.ok) {
-      console.error('OpenAI request failed', apiResponse.status);
-      return response.status(502).json({ error: 'The AI drafting service is temporarily unavailable.' });
-    }
-
+    const apiResponse = await requestDraft(input);
     const payload = await apiResponse.json();
     const outputText = extractOutputText(payload);
     if (!outputText) return response.status(502).json({ error: 'The AI service returned no draft.' });
     return response.status(200).json(JSON.parse(outputText));
   } catch (error) {
     console.error('Unable to parse AHTR notes', error instanceof Error ? error.message : 'Unknown error');
-    return response.status(502).json({ error: 'Unable to draft the form from these notes.' });
+    const timedOut = error?.name === 'TimeoutError' || error?.name === 'AbortError';
+    return response.status(timedOut ? 504 : 502).json({
+      error: timedOut
+        ? 'Drafting took too long. Please try again.'
+        : 'The AI drafting service is temporarily unavailable.',
+    });
   }
 }
