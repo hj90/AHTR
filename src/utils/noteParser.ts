@@ -5,6 +5,8 @@ export interface NoteDraftMeta {
   reviewFieldIds: string[];
   clinicalFlags: string[];
   notes: string[];
+  clientMs: number;
+  serverTiming: string | null;
 }
 
 interface ParsedField {
@@ -24,6 +26,7 @@ export async function parseConsultNotes(
   practiceProfile: PractitionerSettings,
   template: PdfTemplateDefinition,
 ): Promise<{ values: FormValues; meta: NoteDraftMeta }> {
+  const started = performance.now();
   const response = await fetch('/api/parse-notes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -51,6 +54,8 @@ export async function parseConsultNotes(
       reviewFieldIds,
       clinicalFlags: result.clinicalFlags ?? [],
       notes: [],
+      clientMs: performance.now() - started,
+      serverTiming: response.headers.get('Server-Timing'),
     },
   };
 }
