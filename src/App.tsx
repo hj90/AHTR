@@ -1,17 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formRegistry } from './forms/formRegistry';
 import type { FieldValue, FormValues } from './forms/formTypes';
+import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
 import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import { withCalculatedServiceTotals } from './utils/calculations';
 import { createGenericDownloadName, createPdfObjectUrl } from './utils/download';
 import { clearGeneratedPdfUrl, getInitialFormValues, resetFormState } from './utils/formState';
 import { hasErrors, validateTemplate } from './utils/validation';
 import type { ValidationErrors } from './utils/validation';
+import {
+  clearPractitionerSettings,
+  emptyPractitionerSettings,
+  getNewFormValues,
+  loadPractitionerSettings,
+  savePractitionerSettings,
+} from './utils/practitionerSettings';
+import type { PractitionerSettings } from './utils/practitionerSettings';
 
-type Screen = 'home' | 'form' | 'review' | 'complete';
+type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
 export default function App() {
   const template = formRegistry[0];
@@ -22,6 +32,12 @@ export default function App() {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
+    loadPractitionerSettings,
+  );
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
+  );
 
   const downloadName = useMemo(() => createGenericDownloadName(template), [template]);
 
@@ -43,8 +59,30 @@ export default function App() {
   }
 
   function startForm() {
+    setValues(getNewFormValues(template, practitionerSettings));
+    setErrors({});
+    setGenerationError(null);
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
+    window.scrollTo({ top: 0 });
+  }
+
+  function saveSettings(nextSettings: PractitionerSettings) {
+    savePractitionerSettings(nextSettings);
+    setPractitionerSettings(nextSettings);
+  }
+
+  function clearSettings() {
+    clearPractitionerSettings();
+    setPractitionerSettings(emptyPractitionerSettings);
+  }
+
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem('ahtr-sidebar-collapsed', String(next));
+      return next;
+    });
   }
 
   function reviewForm() {
@@ -94,7 +132,7 @@ export default function App() {
 
   function clearForm() {
     const clearedState = resetFormState(template, generatedPdfUrl);
-    setValues(clearedState.values);
+    setValues({ ...clearedState.values, ...getNewFormValues(template, practitionerSettings) });
     setGeneratedPdfUrl(clearedState.generatedPdfUrl);
     setErrors({});
     setGenerationError(null);
@@ -104,7 +142,33 @@ export default function App() {
   }
 
   if (screen === 'home') {
-    return <HomeScreen template={template} onStart={startForm} />;
+    return (
+      <AppShell
+        activePage="home"
+        collapsed={sidebarCollapsed}
+        onNavigate={setScreen}
+        onToggle={toggleSidebar}
+      >
+        <HomeScreen onStartBlank={startForm} onStartFromNotes={startForm} />
+      </AppShell>
+    );
+  }
+
+  if (screen === 'settings') {
+    return (
+      <AppShell
+        activePage="settings"
+        collapsed={sidebarCollapsed}
+        onNavigate={setScreen}
+        onToggle={toggleSidebar}
+      >
+        <SettingsScreen
+          settings={practitionerSettings}
+          onSave={saveSettings}
+          onClear={clearSettings}
+        />
+      </AppShell>
+    );
   }
 
   if (screen === 'review') {

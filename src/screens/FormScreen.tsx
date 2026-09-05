@@ -48,7 +48,6 @@ export function FormScreen({
     <main className="workspace-shell">
       <header className="workspace-header">
         <div>
-          <p className="screen-label">Local browser session</p>
           <h1>{template.name}</h1>
         </div>
         <button className="ghost-action" type="button" onClick={onClear}>
