@@ -788,12 +788,12 @@ dd {
 .app-shell {
   display: grid;
   grid-template-columns: 214px minmax(0, 1fr);
-  width: min(1280px, calc(100vw - 32px));
-  min-height: calc(100vh - 32px);
-  margin: 16px auto;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   box-shadow: var(--shadow);
   transition: grid-template-columns 160ms ease;
@@ -1282,8 +1282,8 @@ dd {
   .app-shell,
   .app-shell.app-shell--collapsed {
     grid-template-columns: 1fr;
-    width: min(100% - 20px, 1280px);
-    margin: 10px auto;
+    width: 100%;
+    margin: 0;
   }
 
   .app-sidebar {
