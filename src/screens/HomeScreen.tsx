@@ -1,4 +1,4 @@
-import { ArrowRight, ClipboardPaste, FilePlus2, Plug, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ClipboardPaste, FilePlus2, Plug } from 'lucide-react';
 import { useState } from 'react';
 
 type StartMethod = 'notes' | 'blank' | 'cliniko';
@@ -24,10 +24,6 @@ export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) 
         <div>
           <h1>Allied Health PDF Filler</h1>
           <p>Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.</p>
-        </div>
-        <div className="browser-processing-note">
-          <ShieldCheck aria-hidden="true" size={18} />
-          <span>Form information and PDF processing stay in this browser.</span>
         </div>
       </header>
 

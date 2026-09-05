@@ -928,7 +928,6 @@ dd {
   line-height: 1.5;
 }
 
-.browser-processing-note,
 .device-status {
   display: inline-flex;
   align-items: center;
@@ -936,15 +935,6 @@ dd {
   color: var(--accent-strong);
   font-size: 0.78rem;
   font-weight: 700;
-}
-
-.browser-processing-note {
-  max-width: 320px;
-  border: 1px solid #bed8d2;
-  border-radius: 7px;
-  background: var(--accent-soft);
-  padding: 12px 14px;
-  line-height: 1.4;
 }
 
 .start-section,
