@@ -7,17 +7,19 @@ import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import {
+  clearPractitionerSettings,
+  loadPractitionerSettings,
+  savePractitionerSettings,
+} from './integrations/practitionerSettingsStore';
 import { withCalculatedServiceTotals } from './utils/calculations';
 import { createGenericDownloadName, createPdfObjectUrl } from './utils/download';
 import { clearGeneratedPdfUrl, getInitialFormValues, resetFormState } from './utils/formState';
 import { hasErrors, validateTemplate } from './utils/validation';
 import type { ValidationErrors } from './utils/validation';
 import {
-  clearPractitionerSettings,
   emptyPractitionerSettings,
   getNewFormValues,
-  loadPractitionerSettings,
-  savePractitionerSettings,
 } from './utils/practitionerSettings';
 import type { PractitionerSettings } from './utils/practitionerSettings';
 import { parseConsultNotes } from './utils/noteParser';
@@ -35,7 +37,7 @@ export default function App() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [draftSummary, setDraftSummary] = useState<string | null>(null);
   const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
-    loadPractitionerSettings,
+    emptyPractitionerSettings,
   );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
@@ -46,6 +48,29 @@ export default function App() {
   useEffect(() => {
     return () => clearGeneratedPdfUrl(generatedPdfUrl);
   }, [generatedPdfUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        const storedSettings = await loadPractitionerSettings();
+        if (!cancelled) {
+          setPractitionerSettings(storedSettings);
+        }
+      } catch {
+        if (!cancelled) {
+          setPractitionerSettings(emptyPractitionerSettings);
+        }
+      }
+    }
+
+    void loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function updateField(fieldId: string, value: FieldValue) {
     setValues((currentValues) => withCalculatedServiceTotals(currentValues, fieldId, value));
@@ -94,13 +119,13 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
 
-  function saveSettings(nextSettings: PractitionerSettings) {
-    savePractitionerSettings(nextSettings);
-    setPractitionerSettings(nextSettings);
+  async function saveSettings(nextSettings: PractitionerSettings) {
+    const storedSettings = await savePractitionerSettings(nextSettings);
+    setPractitionerSettings(storedSettings);
   }
 
-  function clearSettings() {
-    clearPractitionerSettings();
+  async function clearSettings() {
+    await clearPractitionerSettings();
     setPractitionerSettings(emptyPractitionerSettings);
   }
 

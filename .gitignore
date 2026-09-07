@@ -8,3 +8,4 @@ public/templates/demo-allied-health-referral.pdf
 public/templates/demo-allied-health-referral-preview.png
 .vercel
 .env*
+!.env.example

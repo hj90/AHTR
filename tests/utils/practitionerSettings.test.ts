@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { demoAlliedHealthReferral } from '../../src/forms/templates/demoAlliedHealthReferral';
 import {
+  demoUserId,
   emptyPractitionerSettings,
   getNewFormValues,
+  settingsToUserRow,
+  userRowToSettings,
 } from '../../src/utils/practitionerSettings';
 
 describe('practitioner settings helpers', () => {
@@ -16,5 +19,34 @@ describe('practitioner settings helpers', () => {
     expect(values.patientName).toBe('');
     expect(values.practitionerName).toBe('Alex Clinician');
     expect(values.practiceEmail).toBe('practice@example.test');
+  });
+
+  it('maps settings to the demo users table row shape', () => {
+    const row = settingsToUserRow({
+      practitionerName: 'Alex Clinician',
+      ahpraNumber: 'PHY0000000000',
+      discipline: 'Physiotherapist',
+      providerNumber: 'SIRA-123',
+      practiceName: 'Example Allied Health',
+      practicePhone: '0290000000',
+      practiceEmail: 'practice@example.test',
+      practiceAddress: '1 Example Street',
+    });
+
+    expect(row).toEqual({
+      id: demoUserId,
+      practitioner_name: 'Alex Clinician',
+      ahpra_number: 'PHY0000000000',
+      discipline: 'Physiotherapist',
+      provider_number: 'SIRA-123',
+      practice_name: 'Example Allied Health',
+      practice_phone: '0290000000',
+      practice_email: 'practice@example.test',
+      practice_address: '1 Example Street',
+    });
+  });
+
+  it('maps missing database rows to empty settings', () => {
+    expect(userRowToSettings(null)).toEqual(emptyPractitionerSettings);
   });
 });

@@ -1,11 +1,24 @@
-import { Plug, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  Database,
+  Plug,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  TriangleAlert,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
+import {
+  checkSupabaseConnection,
+  getSupabaseConnectionStatus,
+  type SupabaseConnectionResult,
+} from '../integrations/supabaseClient';
 import type { PractitionerSettings } from '../utils/practitionerSettings';
 
 interface SettingsScreenProps {
   settings: PractitionerSettings;
-  onSave: (settings: PractitionerSettings) => void;
-  onClear: () => void;
+  onSave: (settings: PractitionerSettings) => Promise<void>;
+  onClear: () => Promise<void>;
 }
 
 const fields: Array<{
@@ -32,14 +45,39 @@ const disciplineOptions = [
   'Osteopath',
   'Physiotherapist',
   'Psychologist',
-  'Other (please specify)',
 ];
 
 export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProps) {
   const [draft, setDraft] = useState(settings);
-  const [saved, setSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('Stored in Supabase for the demo user.');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseConnectionResult>(
+    getSupabaseConnectionStatus,
+  );
+  const [isCheckingSupabase, setIsCheckingSupabase] = useState(false);
 
-  useEffect(() => setDraft(settings), [settings]);
+  useEffect(() => {
+    setDraft({
+      ...settings,
+      discipline: disciplineOptions.includes(settings.discipline) ? settings.discipline : '',
+    });
+  }, [settings]);
+  useEffect(() => {
+    if (supabaseStatus.state === 'configured') {
+      void refreshSupabaseStatus();
+    }
+  }, []);
+
+  async function refreshSupabaseStatus() {
+    setIsCheckingSupabase(true);
+    try {
+      setSupabaseStatus(await checkSupabaseConnection());
+    } finally {
+      setIsCheckingSupabase(false);
+    }
+  }
 
   return (
     <main className="settings-screen">
@@ -54,9 +92,14 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
         className="settings-card"
         onSubmit={(event) => {
           event.preventDefault();
-          onSave(draft);
-          setSaved(true);
-          window.setTimeout(() => setSaved(false), 2400);
+          setIsSaving(true);
+          setSaveError(null);
+          onSave(draft)
+            .then(() => setSaveMessage('Details saved to Supabase.'))
+            .catch((error) => {
+              setSaveError(error instanceof Error ? error.message : 'Unable to save details.');
+            })
+            .finally(() => setIsSaving(false));
         }}
       >
         <div className="settings-card-heading">
@@ -71,7 +114,8 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
                 <select
                   value={draft.discipline}
                   onChange={(event) => {
-                    setSaved(false);
+                    setSaveError(null);
+                    setSaveMessage('Unsaved changes.');
                     setDraft((current) => ({ ...current, discipline: event.target.value }));
                   }}
                 >
@@ -84,7 +128,8 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
                   type={field.type ?? 'text'}
                   value={draft[field.key]}
                   onChange={(event) => {
-                    setSaved(false);
+                    setSaveError(null);
+                    setSaveMessage('Unsaved changes.');
                     setDraft((current) => ({ ...current, [field.key]: event.target.value }));
                   }}
                 />
@@ -94,14 +139,41 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           ))}
         </div>
         <div className="settings-actions">
-          <span aria-live="polite">{saved ? 'Details saved.' : 'Stored only in this browser.'}</span>
-          <button className="primary-action" type="submit">Save details</button>
+          <span className={saveError ? 'settings-error' : ''} aria-live="polite">
+            {saveError ?? saveMessage}
+          </span>
+          <button className="primary-action" type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving details' : 'Save details'}
+          </button>
         </div>
       </form>
 
       <section className="settings-card settings-card--muted">
         <div className="settings-card-heading">
           <h2>Checks and integrations</h2>
+        </div>
+        <div className={`coming-soon-row integration-row integration-row--${supabaseStatus.state}`}>
+          {supabaseStatus.state === 'connected' ? (
+            <CheckCircle2 aria-hidden="true" size={20} />
+          ) : supabaseStatus.state === 'configured' ? (
+            <Database aria-hidden="true" size={20} />
+          ) : (
+            <TriangleAlert aria-hidden="true" size={20} />
+          )}
+          <div>
+            <h3>Supabase</h3>
+            <p>{supabaseStatus.detail}</p>
+          </div>
+          <button
+            className="text-action integration-check-action"
+            type="button"
+            onClick={refreshSupabaseStatus}
+            disabled={isCheckingSupabase || supabaseStatus.state === 'missing-config'}
+          >
+            <RefreshCw aria-hidden="true" size={15} />
+            {isCheckingSupabase ? 'Checking' : 'Check'}
+          </button>
+          <span>{isCheckingSupabase ? 'Checking' : supabaseStatus.label}</span>
         </div>
         <div className="coming-soon-row">
           <ShieldCheck aria-hidden="true" size={20} />
@@ -116,17 +188,26 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
       </section>
 
       <section className="clear-settings-card">
-        <div><h2>Data on this device</h2><p>Clear the reusable practitioner and clinic details saved by this app.</p></div>
+        <div><h2>Demo practitioner data</h2><p>Clear the reusable practitioner and clinic details saved in Supabase.</p></div>
         <button
           className="danger-action"
           type="button"
+          disabled={isClearing}
           onClick={() => {
-            if (window.confirm('Clear all saved practitioner and clinic details from this device?')) {
-              onClear();
-              setSaved(false);
+            if (window.confirm('Clear all saved practitioner and clinic details from Supabase?')) {
+              setIsClearing(true);
+              setSaveError(null);
+              onClear()
+                .then(() => {
+                  setSaveMessage('Saved details cleared from Supabase.');
+                })
+                .catch((error) => {
+                  setSaveError(error instanceof Error ? error.message : 'Unable to clear details.');
+                })
+                .finally(() => setIsClearing(false));
             }
           }}
-        ><Trash2 aria-hidden="true" size={16} /> Clear saved details</button>
+        ><Trash2 aria-hidden="true" size={16} /> {isClearing ? 'Clearing details' : 'Clear saved details'}</button>
       </section>
     </main>
   );

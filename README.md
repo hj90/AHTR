@@ -24,6 +24,32 @@ npm run dev
 
 The app will be available at the local Vite URL, usually `http://127.0.0.1:5173`.
 
+## Supabase Demo Configuration
+
+For the online demo branch, browser-side Supabase access uses only the project URL and publishable key:
+
+```bash
+SUPABASE_URL=https://your-project-ref.supabase.co \
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_publishable_key \
+npm run dev
+```
+
+You can also put those values in `.env.local`. The app intentionally does not expose `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or any `sb_secret_...` value to the browser bundle.
+
+The demo stores reusable practitioner settings in `public.users` against a single hard-coded UUID:
+
+```text
+11111111-1111-4111-8111-111111111111
+```
+
+Apply the migration in `supabase/migrations` before using Settings save/clear against a fresh Supabase project. You can run it through the Supabase SQL editor, the Supabase CLI, or this helper when `SUPABASE_DB_URL` or `SUPABASE_ACCESS_TOKEN` is available:
+
+```bash
+npm run supabase:apply-demo-migration
+```
+
+For `SUPABASE_DB_URL`, use the direct database connection string if your network supports IPv6. On IPv4-only networks, use the Supabase Shared Pooler / Supavisor session-mode connection string from the dashboard instead.
+
 ## Build
 
 ```bash

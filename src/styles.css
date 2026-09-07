@@ -1174,12 +1174,15 @@ dd {
 
 .settings-field {
   display: grid;
+  align-content: start;
   gap: 6px;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
-.settings-field input {
+.settings-field input,
+.settings-field select {
+  min-height: 48px;
   padding: 9px 11px;
   font-size: 0.84rem;
   font-weight: 400;
@@ -1203,6 +1206,11 @@ dd {
   font-size: 0.75rem;
 }
 
+.settings-error {
+  color: var(--safety);
+  font-weight: 800;
+}
+
 .settings-card--muted {
   background: #fbfcfc;
 }
@@ -1217,6 +1225,40 @@ dd {
   border-radius: 7px;
   background: #fff;
   padding: 13px 15px;
+}
+
+.integration-row {
+  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  align-items: center;
+}
+
+.integration-row--connected {
+  border-color: #9fcdc2;
+  background: #f7fcfa;
+}
+
+.integration-row--connected > svg {
+  color: #257264;
+}
+
+.integration-row--rejected,
+.integration-row--unreachable,
+.integration-row--invalid-config,
+.integration-row--missing-config {
+  border-color: #e1b0a6;
+  background: #fffafa;
+}
+
+.integration-row--rejected > svg,
+.integration-row--unreachable > svg,
+.integration-row--invalid-config > svg,
+.integration-row--missing-config > svg {
+  color: var(--safety);
+}
+
+.integration-check-action {
+  min-height: 32px;
+  white-space: nowrap;
 }
 
 .coming-soon-row h3 {

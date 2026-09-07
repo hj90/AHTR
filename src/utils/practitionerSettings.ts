@@ -1,6 +1,8 @@
 import type { FormValues, PdfTemplateDefinition } from '../forms/formTypes';
 import { getInitialFormValues } from './formState';
 
+export const demoUserId = '11111111-1111-4111-8111-111111111111';
+
 export interface PractitionerSettings {
   practitionerName: string;
   ahpraNumber: string;
@@ -10,6 +12,18 @@ export interface PractitionerSettings {
   practicePhone: string;
   practiceEmail: string;
   practiceAddress: string;
+}
+
+export interface PractitionerSettingsRow {
+  id: string;
+  practitioner_name: string;
+  ahpra_number: string;
+  discipline: string;
+  provider_number: string;
+  practice_name: string;
+  practice_phone: string;
+  practice_email: string;
+  practice_address: string;
 }
 
 export const emptyPractitionerSettings: PractitionerSettings = {
@@ -22,27 +36,6 @@ export const emptyPractitionerSettings: PractitionerSettings = {
   practiceEmail: '',
   practiceAddress: '',
 };
-
-const storageKey = 'ahtr-practitioner-settings-v1';
-
-export function loadPractitionerSettings(): PractitionerSettings {
-  try {
-    const stored = window.localStorage.getItem(storageKey);
-    return stored
-      ? { ...emptyPractitionerSettings, ...(JSON.parse(stored) as Partial<PractitionerSettings>) }
-      : emptyPractitionerSettings;
-  } catch {
-    return emptyPractitionerSettings;
-  }
-}
-
-export function savePractitionerSettings(settings: PractitionerSettings): void {
-  window.localStorage.setItem(storageKey, JSON.stringify(settings));
-}
-
-export function clearPractitionerSettings(): void {
-  window.localStorage.removeItem(storageKey);
-}
 
 export function getNewFormValues(
   template: PdfTemplateDefinition,
@@ -58,5 +51,39 @@ export function getNewFormValues(
     phoneNumber: settings.practicePhone,
     practiceEmail: settings.practiceEmail,
     treatingPractitionerEmail: settings.practiceEmail,
+  };
+}
+
+export function settingsToUserRow(
+  settings: PractitionerSettings,
+  id = demoUserId,
+): PractitionerSettingsRow {
+  return {
+    id,
+    practitioner_name: settings.practitionerName,
+    ahpra_number: settings.ahpraNumber,
+    discipline: settings.discipline,
+    provider_number: settings.providerNumber,
+    practice_name: settings.practiceName,
+    practice_phone: settings.practicePhone,
+    practice_email: settings.practiceEmail,
+    practice_address: settings.practiceAddress,
+  };
+}
+
+export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null): PractitionerSettings {
+  if (!row) {
+    return emptyPractitionerSettings;
+  }
+
+  return {
+    practitionerName: row.practitioner_name ?? '',
+    ahpraNumber: row.ahpra_number ?? '',
+    discipline: row.discipline ?? '',
+    providerNumber: row.provider_number ?? '',
+    practiceName: row.practice_name ?? '',
+    practicePhone: row.practice_phone ?? '',
+    practiceEmail: row.practice_email ?? '',
+    practiceAddress: row.practice_address ?? '',
   };
 }
