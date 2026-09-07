@@ -1053,11 +1053,12 @@ dd {
   margin-top: 12px;
 }
 
-.ai-consent {
+.start-panel > .ai-consent {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: 12px;
   margin-top: 12px;
+  margin-bottom: 0;
   color: var(--ink-muted);
   font-size: 0.76rem;
   line-height: 1.45;
