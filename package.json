@@ -17,6 +17,9 @@
     "benchmark:notes": "node scripts/benchmark-note-parser.mjs",
     "inspect-pdf": "tsx scripts/inspect-pdf-fields.ts",
     "supabase:apply-demo-migration": "node scripts/apply-supabase-migration.mjs",
+    "cliniko:smoke": "node scripts/cliniko-smoke.mjs",
+    "cliniko:seed-demo": "node scripts/seed-cliniko-demo.mjs",
+    "cliniko:seed-demo:apply": "node scripts/seed-cliniko-demo.mjs --apply --confirm-clear-all-patients",
     "create-demo-template": "node scripts/create-demo-template.mjs"
   },
   "dependencies": {
