@@ -1,9 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { AHTR_SYSTEM_PROMPT, extractOutputText, responseSchema } from '../api/parse-notes.mjs';
+import { loadLocalEnv } from './lib/local-env.mjs';
 
-const models = (process.env.BENCHMARK_MODELS || 'gpt-4.1-mini,gpt-5.4-nano').split(',');
-const runs = Number(process.env.BENCHMARK_RUNS || 2);
+const env = await loadLocalEnv();
+const models = (env.BENCHMARK_MODELS || 'gpt-4.1-mini,gpt-5.4-nano').split(',');
+const runs = Number(env.BENCHMARK_RUNS || 2);
 
 const cases = [
   {
@@ -34,8 +36,8 @@ const cases = [
   },
   {
     id: 'outcome-history',
-    note: 'LEFS was 28/80 on 2026-07-01, 39/80 on 2026-08-01 and 51/80 on 2026-09-01. This indicates improving lower-limb function.',
-    expected: { som1Measure: 'LEFS', som1InitialDate: '2026-07-01', som1InitialScore: '28', som1PreviousDate: '2026-08-01', som1PreviousScore: '39', som1CurrentDate: '2026-09-01', som1CurrentScore: '51' },
+    note: 'Knee Injury and Osteoarthritis Outcome Score (KOOS) was 45/100 on 2026-07-01, 58/100 on 2026-08-01 and 66/100 on 2026-09-01. This indicates improving knee function.',
+    expected: { som1Measure: 'Knee Injury and Osteoarthritis Outcome Score (KOOS)', som1InitialDate: '2026-07-01', som1InitialScore: '45', som1PreviousDate: '2026-08-01', som1PreviousScore: '58', som1CurrentDate: '2026-09-01', som1CurrentScore: '66' },
     expectedContains: { somInterpretation: ['improving'] },
     forbidden: ['personName', 'claimNumber'],
   },
@@ -91,26 +93,26 @@ function score(testCase, payload) {
 async function runCase(model, testCase, run) {
   const input = `<clinical_note>\n${testCase.note}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n{}\n</practice_profile>`;
   const started = performance.now();
-  const response = process.env.BENCHMARK_ENDPOINT
-    ? await fetch(process.env.BENCHMARK_ENDPOINT, {
+  const response = env.BENCHMARK_ENDPOINT
+    ? await fetch(env.BENCHMARK_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clinicalNote: testCase.note, practiceProfile: {} }),
       })
     : await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ model, store: false, instructions: AHTR_SYSTEM_PROMPT, input, max_output_tokens: 2000, reasoning: model.startsWith('gpt-5.4') ? { effort: 'none' } : undefined, text: { format: { type: 'json_schema', name: 'ahtr_prefill', strict: true, schema: responseSchema } } }),
       });
   const latencyMs = Math.round(performance.now() - started);
   if (!response.ok) throw new Error(`${model}/${testCase.id}: HTTP ${response.status} ${await response.text()}`);
   const body = await response.json();
-  const payload = process.env.BENCHMARK_ENDPOINT ? body : JSON.parse(extractOutputText(body));
+  const payload = env.BENCHMARK_ENDPOINT ? body : JSON.parse(extractOutputText(body));
   return { model, caseId: testCase.id, run, latencyMs, ...score(testCase, payload) };
 }
 
-if (!process.env.OPENAI_API_KEY && !process.env.BENCHMARK_ENDPOINT) {
-  throw new Error('Set OPENAI_API_KEY or BENCHMARK_ENDPOINT before running the benchmark.');
+if (!env.OPENAI_API_KEY && !env.BENCHMARK_ENDPOINT) {
+  throw new Error('Set OPENAI_API_KEY in .env.local or BENCHMARK_ENDPOINT before running the benchmark.');
 }
 
 const results = [];

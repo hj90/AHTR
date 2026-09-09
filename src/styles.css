@@ -1121,6 +1121,146 @@ dd {
   background: #fbfcfc;
 }
 
+.cliniko-import-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.cliniko-import-heading,
+.cliniko-import-heading > div,
+.cliniko-patient-button,
+.cliniko-appointment-row {
+  display: flex;
+  align-items: center;
+}
+
+.cliniko-import-heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cliniko-import-heading > div {
+  min-width: 0;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.cliniko-import-heading svg,
+.cliniko-patient-button > svg,
+.cliniko-appointment-row > svg {
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+}
+
+.cliniko-import-heading h3 {
+  font-size: 0.9rem;
+}
+
+.cliniko-import-heading p {
+  margin-top: 4px;
+}
+
+.cliniko-empty {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.cliniko-patient-list {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cliniko-patient-card + .cliniko-patient-card {
+  border-top: 1px solid var(--line);
+}
+
+.cliniko-patient-button {
+  width: 100%;
+  gap: 10px;
+  border: 0;
+  background: #fff;
+  padding: 13px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cliniko-patient-button:hover {
+  background: #f7fbfa;
+}
+
+.cliniko-patient-button > span,
+.cliniko-appointment-row > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.cliniko-patient-button > span {
+  flex: 1 1 auto;
+}
+
+.cliniko-patient-button strong,
+.cliniko-appointment-row strong {
+  font-size: 0.82rem;
+}
+
+.cliniko-patient-button small,
+.cliniko-appointment-row small {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.cliniko-patient-button .is-open {
+  transform: rotate(180deg);
+}
+
+.cliniko-appointment-list {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #e5ece9;
+  background: #fbfdfc;
+  padding: 10px 13px 13px 41px;
+}
+
+.cliniko-appointment-row {
+  gap: 10px;
+  min-height: 52px;
+  border: 1px solid #d9e4e1;
+  border-radius: 7px;
+  background: #fff;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.cliniko-appointment-row:has(input:checked) {
+  border-color: var(--accent-strong);
+  background: #f4faf8;
+  box-shadow: 0 0 0 1px var(--accent-strong);
+}
+
+.cliniko-appointment-row.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cliniko-appointment-row input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.cliniko-import-actions {
+  border-top: 1px solid #e5ece9;
+  padding-top: 14px;
+}
+
 .requests-empty {
   margin-top: 16px;
 }
@@ -1437,9 +1577,20 @@ dd {
 
   .start-panel-actions,
   .start-panel--action,
+  .cliniko-import-heading,
   .clear-settings-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .cliniko-import-heading > .ghost-action,
+  .cliniko-import-actions > .primary-action {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .cliniko-appointment-list {
+    padding-left: 13px;
   }
 
   .settings-grid {

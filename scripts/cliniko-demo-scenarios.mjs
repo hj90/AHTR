@@ -1,7 +1,7 @@
 export const DEMO_MARKER = 'AHTR_DEMO_SEED';
 export const SEED_WINDOW = {
-  startsAtOrAfter: '2026-09-14T00:00:00Z',
-  startsAtOrBefore: '2026-09-25T23:59:59Z',
+  startsAtOrAfter: '2026-07-01T00:00:00Z',
+  startsAtOrBefore: '2026-09-30T23:59:59Z',
 };
 
 export const seedScenarios = [
@@ -9,7 +9,7 @@ export const seedScenarios = [
     slug: 'shoulder-warehouse-rtw',
     title: 'Shoulder injury with graduated return to work',
     patient: {
-      first_name: 'AHTR Demo Jordan',
+      first_name: 'Jordan',
       preferred_first_name: 'Jordan',
       last_name: 'Hayes',
       date_of_birth: '1987-03-14',
@@ -23,24 +23,24 @@ export const seedScenarios = [
       phone: '0400000101',
     },
     appointment: {
-      starts_at: '2026-09-14T00:00:00Z',
-      ends_at: '2026-09-14T00:45:00Z',
+      starts_at: '2026-09-04T00:00:00Z',
+      ends_at: '2026-09-04T00:45:00Z',
     },
     ahtBrief: {
-      requestDate: '2026-09-14',
-      servicesFirstCommenced: '2026-08-21',
+      requestDate: '2026-09-04',
+      servicesFirstCommenced: '2026-08-07',
       consultationsToDate: '5',
       discipline: 'Physiotherapist',
       referredBy: 'Dr Priya Shah',
       requestPhone: '02 9000 0101',
       claimNumber: 'WC-AHTR-1001',
-      injuryDate: '2026-08-18',
+      injuryDate: '2026-08-02',
       preInjuryWork: 'Warehouse storeperson, 38 hours per week, overhead picking and pallet wrapping.',
       injury: 'Right rotator cuff strain after lifting cartons overhead.',
       clinicalSigns:
         'Right shoulder flexion 120 degrees, painful resisted abduction, sleep disturbed when lying on right side.',
-      riskScreening: 'OMSPQ-10 on 2026-09-14 scored 42/100.',
-      outcomeMeasure: 'QuickDASH initial 58/100 on 2026-08-21, previous 50/100 on 2026-09-03, current 43/100 on 2026-09-14.',
+      riskScreening: 'OMSPQ-10 on 2026-09-04 scored 42/100.',
+      outcomeMeasure: 'QuickDASH initial 58/100 on 2026-08-07, previous 50/100 on 2026-08-21, current 43/100 on 2026-09-04.',
       barriers: 'Modified duties are available but overhead picking still provokes symptoms.',
       treatmentPlan:
         'Progressive rotator cuff and scapular strengthening, graded work simulation, education and home program.',
@@ -54,7 +54,7 @@ export const seedScenarios = [
     slug: 'knee-exercise-physiology',
     title: 'Knee injury exercise physiology progression',
     patient: {
-      first_name: 'AHTR Demo Casey',
+      first_name: 'Casey',
       preferred_first_name: 'Casey',
       last_name: 'Nguyen',
       date_of_birth: '1992-11-02',
@@ -68,11 +68,11 @@ export const seedScenarios = [
       phone: '0400000102',
     },
     appointment: {
-      starts_at: '2026-09-15T01:00:00Z',
-      ends_at: '2026-09-15T01:45:00Z',
+      starts_at: '2026-09-03T01:00:00Z',
+      ends_at: '2026-09-03T01:45:00Z',
     },
     ahtBrief: {
-      requestDate: '2026-09-15',
+      requestDate: '2026-09-03',
       servicesFirstCommenced: '2026-08-05',
       consultationsToDate: '7',
       discipline: 'Accredited Exercise Physiologist',
@@ -83,8 +83,9 @@ export const seedScenarios = [
       preInjuryWork: 'Retail supervisor, 35 hours weekly, standing most of the shift and climbing stairs to storeroom.',
       injury: 'Left knee medial collateral ligament sprain from slipping on a wet floor.',
       clinicalSigns: 'Pain 3/10 on stairs, single-leg squat limited by valgus collapse, no locking or giving way reported.',
-      riskScreening: 'Keele STarT MSK on 2026-09-15 scored medium risk.',
-      outcomeMeasure: 'LEFS initial 31/80 on 2026-08-05, previous 42/80 on 2026-08-26, current 51/80 on 2026-09-15.',
+      riskScreening: 'Keele STarT MSK on 2026-09-03 scored medium risk.',
+      outcomeMeasure:
+        'Knee Injury and Osteoarthritis Outcome Score (KOOS) initial 45/100 on 2026-08-05, previous 58/100 on 2026-08-20, current 66/100 on 2026-09-03.',
       barriers: 'Fear of re-injury when carrying stock and low confidence with stairs.',
       treatmentPlan: 'Strength, balance, stair tolerance, pacing education and gym-based self-management plan.',
       requestedServices: 'Four exercise physiology sessions fortnightly at $125 each, total $500.',
@@ -97,7 +98,7 @@ export const seedScenarios = [
     slug: 'psychological-adjustment',
     title: 'Psychology barriers and case conference request',
     patient: {
-      first_name: 'AHTR Demo Morgan',
+      first_name: 'Morgan',
       preferred_first_name: 'Morgan',
       last_name: 'Patel',
       date_of_birth: '1979-06-24',
@@ -111,11 +112,11 @@ export const seedScenarios = [
       phone: '0400000103',
     },
     appointment: {
-      starts_at: '2026-09-16T03:00:00Z',
-      ends_at: '2026-09-16T03:50:00Z',
+      starts_at: '2026-09-02T03:00:00Z',
+      ends_at: '2026-09-02T03:50:00Z',
     },
     ahtBrief: {
-      requestDate: '2026-09-16',
+      requestDate: '2026-09-02',
       servicesFirstCommenced: '2026-08-12',
       consultationsToDate: '4',
       discipline: 'Psychologist',
@@ -127,8 +128,8 @@ export const seedScenarios = [
       injury: 'Adjustment disorder symptoms after workplace assault by a passenger.',
       clinicalSigns:
         'Hypervigilance around passengers, poor sleep, panic symptoms before depot attendance, no suicidal ideation reported.',
-      riskScreening: 'DASS-42 on 2026-09-16: depression 18, anxiety 20, stress 24.',
-      outcomeMeasure: 'K-10 initial 34/50 on 2026-08-12, previous 31/50 on 2026-08-31, current 28/50 on 2026-09-16.',
+      riskScreening: 'DASS-42 on 2026-09-02: depression 18, anxiety 20, stress 24.',
+      outcomeMeasure: 'K-10 initial 34/50 on 2026-08-12, previous 31/50 on 2026-08-24, current 28/50 on 2026-09-02.',
       barriers: 'Avoidance of bus depot and uncertainty about graded exposure duties.',
       treatmentPlan:
         'Trauma-informed CBT strategies, sleep routine, graded exposure plan and coordination with GP and employer.',
@@ -143,7 +144,7 @@ export const seedScenarios = [
     slug: 'ankle-incomplete-admin',
     title: 'Ankle sprain with deliberately incomplete claim details',
     patient: {
-      first_name: 'AHTR Demo Riley',
+      first_name: 'Riley',
       preferred_first_name: 'Riley',
       last_name: 'Brown',
       date_of_birth: '2001-01-18',
@@ -157,24 +158,24 @@ export const seedScenarios = [
       phone: '0400000104',
     },
     appointment: {
-      starts_at: '2026-09-17T00:30:00Z',
-      ends_at: '2026-09-17T01:15:00Z',
+      starts_at: '2026-09-01T00:30:00Z',
+      ends_at: '2026-09-01T01:15:00Z',
     },
     ahtBrief: {
-      requestDate: '2026-09-17',
-      servicesFirstCommenced: '2026-09-03',
+      requestDate: '2026-09-01',
+      servicesFirstCommenced: '2026-08-18',
       consultationsToDate: '3',
       discipline: 'Physiotherapist',
       referredBy: 'Dr Alex Morrison',
       requestPhone: '02 9000 0104',
       claimNumber: 'The claim number is not available in this transcript.',
-      injuryDate: '2026-08-29',
+      injuryDate: '2026-08-14',
       preInjuryWork: 'Apprentice electrician, 40 hours weekly, ladder work and kneeling in roof cavities.',
       injury: 'Right lateral ankle sprain after stepping into a trench.',
       clinicalSigns:
         'Swelling over anterior talofibular ligament, dorsiflexion limited by 10 degrees, walking tolerance 20 minutes.',
       riskScreening: 'No formal risk screening tool completed yet.',
-      outcomeMeasure: 'FADI initial 54/104 on 2026-09-03 and current 68/104 on 2026-09-17.',
+      outcomeMeasure: 'FADI initial 54/104 on 2026-08-18 and current 68/104 on 2026-09-01.',
       barriers: 'Ladder climbing is restricted and the worksite has uneven ground.',
       treatmentPlan: 'Manual therapy, proprioception, calf strengthening, bracing advice and graded ladder drills.',
       requestedServices: 'Four physiotherapy sessions weekly at $105 each, total $420.',
@@ -186,7 +187,7 @@ export const seedScenarios = [
     slug: 'lumbar-partial-goals',
     title: 'Lumbar injury with partially achieved prior goals',
     patient: {
-      first_name: 'AHTR Demo Taylor',
+      first_name: 'Taylor',
       preferred_first_name: 'Taylor',
       last_name: 'Singh',
       date_of_birth: '1968-04-09',
@@ -200,11 +201,11 @@ export const seedScenarios = [
       phone: '0400000105',
     },
     appointment: {
-      starts_at: '2026-09-18T02:00:00Z',
-      ends_at: '2026-09-18T02:45:00Z',
+      starts_at: '2026-09-07T02:00:00Z',
+      ends_at: '2026-09-07T02:45:00Z',
     },
     ahtBrief: {
-      requestDate: '2026-09-18',
+      requestDate: '2026-09-07',
       servicesFirstCommenced: '2026-07-22',
       consultationsToDate: '9',
       discipline: 'Osteopath',
@@ -216,8 +217,9 @@ export const seedScenarios = [
       injury: 'Lumbar strain while assisting a patient transfer.',
       clinicalSigns:
         'Lumbar flexion remains limited, pain 4/10 after standing longer than 30 minutes, no saddle anaesthesia or bowel or bladder change reported.',
-      riskScreening: 'OMSPQ-10 on 2026-09-18 scored 48/100.',
-      outcomeMeasure: 'PSFS initial 3/10 on 2026-07-22, previous 5/10 on 2026-08-26, current 6/10 on 2026-09-18.',
+      riskScreening: 'OMSPQ-10 on 2026-09-07 scored 48/100.',
+      outcomeMeasure:
+        'Pain Self Efficacy Questionnaire (PSEQ) initial 22/60 on 2026-07-22, previous 30/60 on 2026-08-24, current 36/60 on 2026-09-07.',
       barriers: 'Goals from the last plan are partially achieved because patient transfer duties still flare symptoms.',
       treatmentPlan:
         'Manual therapy, graded lifting exposure, workplace pacing plan, self-management stretches and liaison about transfer aids.',

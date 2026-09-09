@@ -6,7 +6,7 @@ export async function loadLocalEnv(cwd = process.cwd()) {
   const localEnvPath = resolve(cwd, '.env.local');
   const fileEnv = existsSync(localEnvPath) ? parseEnvText(await readFile(localEnvPath, 'utf8')) : {};
 
-  return { ...fileEnv, ...process.env };
+  return { ...process.env, ...fileEnv };
 }
 
 export function parseEnvText(text) {
