@@ -1,6 +1,5 @@
 import { Download, RotateCcw } from 'lucide-react';
 import type { PdfTemplateDefinition } from '../forms/formTypes';
-import { PrivacyNotice } from '../components/PrivacyNotice';
 
 interface CompleteScreenProps {
   template: PdfTemplateDefinition;
@@ -34,7 +33,6 @@ export function CompleteScreen({
             Start a new form
           </button>
         </div>
-        <PrivacyNotice />
       </section>
     </main>
   );

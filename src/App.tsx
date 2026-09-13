@@ -41,7 +41,6 @@ export default function App() {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const [draftSummary, setDraftSummary] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
   );
@@ -92,7 +91,6 @@ export default function App() {
     setValues(getNewFormValues(template, practitionerSettings));
     setErrors({});
     setGenerationError(null);
-    setDraftSummary(null);
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
     window.scrollTo({ top: 0 });
@@ -104,19 +102,6 @@ export default function App() {
     setValues({ ...baseValues, ...draft.values });
     setErrors({});
     setGenerationError(null);
-    const reviewCount = draft.meta.reviewFieldIds.length;
-    const flagCount = draft.meta.clinicalFlags.length;
-    const openAIMatch = draft.meta.serverTiming?.match(/openai;dur=([\d.]+)/);
-    const openAISeconds = openAIMatch ? Number(openAIMatch[1]) / 1000 : null;
-    const totalSeconds = draft.meta.clientMs / 1000;
-    const timingSummary = openAISeconds === null
-      ? ` Draft prepared in ${totalSeconds.toFixed(1)}s.`
-      : ` Draft prepared in ${totalSeconds.toFixed(1)}s (${openAISeconds.toFixed(1)}s AI processing).`;
-    setDraftSummary(
-      `AI drafted ${Object.keys(draft.values).length} field${Object.keys(draft.values).length === 1 ? '' : 's'}. ` +
-      `${reviewCount} need${reviewCount === 1 ? 's' : ''} extra review${flagCount ? `; ${flagCount} clinical flag${flagCount === 1 ? '' : 's'} identified` : ''}.` +
-      timingSummary,
-    );
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
     window.scrollTo({ top: 0 });
@@ -191,7 +176,6 @@ export default function App() {
     setGeneratedPdfUrl(clearedState.generatedPdfUrl);
     setErrors({});
     setGenerationError(null);
-    setDraftSummary(null);
     setActiveSectionId(template.sections[0]?.id ?? null);
     setScreen('form');
     window.scrollTo({ top: 0 });
@@ -266,7 +250,6 @@ export default function App() {
       onBackHome={() => setScreen('home')}
       onReview={reviewForm}
       onClear={clearForm}
-      draftSummary={draftSummary}
     />
   );
 }

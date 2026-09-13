@@ -1,6 +1,5 @@
 import { ArrowLeft, ArrowRight, ClipboardCheck, RotateCcw } from 'lucide-react';
 import { FormSection } from '../components/FormSection';
-import { PrivacyNotice } from '../components/PrivacyNotice';
 import { SectionRail } from '../components/SectionRail';
 import type { FieldValue, FormValues, PdfTemplateDefinition } from '../forms/formTypes';
 import { getSectionProgress } from '../utils/sectionProgress';
@@ -16,7 +15,6 @@ interface FormScreenProps {
   onBackHome: () => void;
   onReview: () => void;
   onClear: () => void;
-  draftSummary?: string | null;
 }
 
 export function FormScreen({
@@ -29,7 +27,6 @@ export function FormScreen({
   onBackHome,
   onReview,
   onClear,
-  draftSummary,
 }: FormScreenProps) {
   const errorCount = Object.keys(errors).length;
   const currentIndex = Math.max(
@@ -69,10 +66,6 @@ export function FormScreen({
           Clear form
         </button>
       </header>
-
-      <PrivacyNotice />
-
-      {draftSummary ? <div className="draft-summary" role="status">{draftSummary} Review every populated field before generating the PDF.</div> : null}
 
       {errorCount > 0 ? (
         <div className="error-summary" role="alert" aria-live="polite">
