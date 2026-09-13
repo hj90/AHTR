@@ -37,7 +37,7 @@ const practiceStateStorageKey = 'ahtr-practice-state';
 
 function loadLocalPracticeState(): PractitionerSettings['practiceState'] {
   const storedState = window.localStorage.getItem(practiceStateStorageKey);
-  return storedState === 'VIC' || storedState === 'QLD' || storedState === 'WA' ? storedState : 'NSW';
+  return storedState === 'VIC' || storedState === 'QLD' || storedState === 'WA' || storedState === 'SA' ? storedState : 'NSW';
 }
 
 function saveLocalPracticeState(state: PractitionerSettings['practiceState']) {

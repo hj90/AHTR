@@ -3,6 +3,7 @@ import { demoAlliedHealthReferral } from '../../src/forms/templates/demoAlliedHe
 import { worksafeVictoriaAlliedHealthRecoveryManagementPlan } from '../../src/forms/templates/worksafeVictoriaAlliedHealthRecoveryManagementPlan';
 import { workcoverQueenslandProviderManagementPlan } from '../../src/forms/templates/workcoverQueenslandProviderManagementPlan';
 import { workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan } from '../../src/forms/templates/workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan';
+import { returnToWorkSouthAustraliaPhysiotherapyManagementPlan } from '../../src/forms/templates/returnToWorkSouthAustraliaPhysiotherapyManagementPlan';
 import {
   demoUserId,
   emptyPractitionerSettings,
@@ -98,5 +99,18 @@ describe('practitioner settings helpers', () => {
     expect(values.waPhysiotherapyConsultations).toBe(true);
     expect(values.practitionerName).toBe('Alex Clinician');
     expect(values.practiceName).toBe('Example Physiotherapy');
+  });
+
+  it('prefills the ReturnToWorkSA practitioner details on both form pages', () => {
+    const values = getNewFormValues(returnToWorkSouthAustraliaPhysiotherapyManagementPlan, {
+      ...emptyPractitionerSettings,
+      practiceState: 'SA',
+      practitionerName: 'Alex Clinician',
+      practiceName: 'Example Physiotherapy',
+    });
+
+    expect(values.practitionerName).toBe('Alex Clinician');
+    expect(values.practiceName).toBe('Example Physiotherapy');
+    expect(values.saFunctionalProviderName).toBe('Alex Clinician');
   });
 });

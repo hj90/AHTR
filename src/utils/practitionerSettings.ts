@@ -4,7 +4,7 @@ import { getInitialFormValues } from './formState';
 export const demoUserId = '11111111-1111-4111-8111-111111111111';
 
 export interface PractitionerSettings {
-  practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA';
+  practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA';
   practitionerName: string;
   ahpraNumber: string;
   discipline: string;
@@ -92,6 +92,10 @@ export function getNewFormValues(
     values.waPhysiotherapyConsultations = true;
   }
 
+  if (template.id === 'return-to-work-south-australia-physiotherapy-management-plan') {
+    values.saFunctionalProviderName = settings.practitionerName;
+  }
+
   return values;
 }
 
@@ -127,7 +131,7 @@ export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null):
     practicePhone: row.practice_phone ?? '',
     practiceEmail: row.practice_email ?? '',
     practiceAddress: row.practice_address ?? '',
-    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' || row.practice_state === 'WA'
+    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' || row.practice_state === 'WA' || row.practice_state === 'SA'
       ? row.practice_state
       : 'NSW',
   };

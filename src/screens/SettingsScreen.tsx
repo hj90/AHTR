@@ -121,7 +121,7 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
                     setSaveMessage('Unsaved changes.');
                     setDraft((current) => ({
                       ...current,
-                      practiceState: event.target.value === 'VIC' || event.target.value === 'QLD' || event.target.value === 'WA'
+                      practiceState: event.target.value === 'VIC' || event.target.value === 'QLD' || event.target.value === 'WA' || event.target.value === 'SA'
                         ? event.target.value
                         : 'NSW',
                     }));
@@ -131,6 +131,7 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
                   <option value="VIC">Victoria</option>
                   <option value="QLD">Queensland</option>
                   <option value="WA">Western Australia</option>
+                  <option value="SA">South Australia</option>
                 </select>
               ) : field.key === 'discipline' ? (
                 <select

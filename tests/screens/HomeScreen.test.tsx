@@ -175,4 +175,10 @@ describe('HomeScreen state-specific form selection', () => {
     expect(screen.getByLabelText(/Transport accident/i)).toBeDisabled();
     expect(screen.getByText('Coming soon')).toBeInTheDocument();
   });
+
+  it('describes the ReturnToWorkSA form for South Australia', () => {
+    render(<HomeScreen practiceState="SA" onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
+
+    expect(screen.getByText(/ReturnToWorkSA physiotherapy management plan/i)).toBeInTheDocument();
+  });
 });
