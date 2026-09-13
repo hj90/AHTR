@@ -1,153 +1,138 @@
 import {
+  ArrowLeft,
   ArrowRight,
-  CalendarCheck2,
-  ChevronDown,
   ClipboardPaste,
+  FilePenLine,
   FilePlus2,
   Plug,
   RefreshCw,
+  Save,
   UserRound,
+  UsersRound,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
-  importClinikoAppointments,
-  listClinikoAppointments,
   listClinikoPatients,
+  listClinikoPractitioners,
 } from '../integrations/clinikoImport';
-import type { ClinikoAppointmentSummary, ClinikoPatient } from '../integrations/clinikoImport';
+import type { ClinikoPatient, ClinikoPractitioner } from '../integrations/clinikoImport';
 
-type StartMethod = 'notes' | 'blank' | 'cliniko';
+type DetailSource = 'cliniko' | 'form';
+type PractitionerSource = 'cliniko' | 'settings' | 'form';
+type StartMethod = 'notes' | 'blank';
+
+export interface HomeStartContext {
+  patient: {
+    source: DetailSource;
+    selected: ClinikoPatient | null;
+  };
+  practitioner: {
+    source: PractitionerSource;
+    selected: ClinikoPractitioner | null;
+  };
+}
 
 interface HomeScreenProps {
   practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA';
-  onStartBlank: () => void;
-  onStartFromNotes: (notes: string) => Promise<void>;
+  onStartBlank: (context: HomeStartContext) => void;
+  onStartFromNotes: (notes: string, context: HomeStartContext) => Promise<void>;
 }
 
-const choices: Array<{ id: StartMethod; label: string; note: string }> = [
-  { id: 'notes', label: 'Draft from consult notes', note: 'Paste today’s notes and open a form to review.' },
-  { id: 'blank', label: 'Fill it in myself', note: 'Start the existing nine-step form with saved details prefilled.' },
-  { id: 'cliniko', label: 'Import from Cliniko', note: 'Load patient appointment notes into the draft workflow.' },
+const patientChoices: Array<{ id: DetailSource; label: string; note: string; icon: typeof Plug }> = [
+  { id: 'cliniko', label: 'Import from Cliniko', note: 'Select a patient and add their saved details to the form.', icon: Plug },
+  { id: 'form', label: 'Fill it in the form', note: 'Enter the patient details yourself in the request.', icon: FilePenLine },
 ];
 
-interface AppointmentListState {
-  appointments: ClinikoAppointmentSummary[];
-  isLoading: boolean;
-  error: string | null;
-}
+const practitionerChoices: Array<{ id: PractitionerSource; label: string; note: string; icon: typeof Plug }> = [
+  { id: 'cliniko', label: 'Import from Cliniko', note: 'Select the treating practitioner from Cliniko.', icon: Plug },
+  { id: 'settings', label: 'Use saved settings', note: 'Start with the practitioner details in Settings.', icon: Save },
+  { id: 'form', label: 'Fill it in the form', note: 'Enter the practitioner details yourself in the request.', icon: FilePenLine },
+];
+
+const startChoices: Array<{ id: StartMethod; label: string; note: string; icon: typeof ClipboardPaste }> = [
+  { id: 'notes', label: 'Paste consult notes', note: 'Draft the request from the notes you paste in.', icon: ClipboardPaste },
+  { id: 'blank', label: 'Fill it in myself', note: 'Open the request with the selected details ready to review.', icon: FilePlus2 },
+];
 
 export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: HomeScreenProps) {
   const [victoriaClaimType, setVictoriaClaimType] = useState<'work' | 'transport'>('work');
+  const [step, setStep] = useState<1 | 2>(1);
+  const [patientSource, setPatientSource] = useState<DetailSource>('form');
+  const [practitionerSource, setPractitionerSource] = useState<PractitionerSource>('settings');
+  const [selectedPatient, setSelectedPatient] = useState<ClinikoPatient | null>(null);
+  const [selectedPractitioner, setSelectedPractitioner] = useState<ClinikoPractitioner | null>(null);
+  const [clinikoPatients, setClinikoPatients] = useState<ClinikoPatient[]>([]);
+  const [clinikoPractitioners, setClinikoPractitioners] = useState<ClinikoPractitioner[]>([]);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(false);
+  const [isLoadingPractitioners, setIsLoadingPractitioners] = useState(false);
+  const [patientError, setPatientError] = useState<string | null>(null);
+  const [practitionerError, setPractitionerError] = useState<string | null>(null);
+  const [hasLoadedPatients, setHasLoadedPatients] = useState(false);
+  const [hasLoadedPractitioners, setHasLoadedPractitioners] = useState(false);
   const [method, setMethod] = useState<StartMethod>('blank');
   const [notes, setNotes] = useState('');
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
-  const [clinikoPatients, setClinikoPatients] = useState<ClinikoPatient[]>([]);
-  const [isLoadingClinikoPatients, setIsLoadingClinikoPatients] = useState(false);
-  const [clinikoError, setClinikoError] = useState<string | null>(null);
-  const [expandedPatientId, setExpandedPatientId] = useState<string | null>(null);
-  const [appointmentsByPatientId, setAppointmentsByPatientId] = useState<Record<string, AppointmentListState>>({});
-  const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(() => new Set());
-  const [isImportingCliniko, setIsImportingCliniko] = useState(false);
-  const [hasLoadedClinikoPatients, setHasLoadedClinikoPatients] = useState(false);
-
-  const selectedAppointmentCount = selectedAppointmentIds.size;
-  const selectedAppointmentLabel = useMemo(
-    () => `${selectedAppointmentCount} appointment${selectedAppointmentCount === 1 ? '' : 's'} selected`,
-    [selectedAppointmentCount],
-  );
 
   useEffect(() => {
-    if (method === 'cliniko' && !hasLoadedClinikoPatients && !isLoadingClinikoPatients) {
+    if (patientSource === 'cliniko' && !hasLoadedPatients && !isLoadingPatients) {
       void loadPatients();
     }
-  }, [hasLoadedClinikoPatients, isLoadingClinikoPatients, method]);
+  }, [hasLoadedPatients, isLoadingPatients, patientSource]);
+
+  useEffect(() => {
+    if (practitionerSource === 'cliniko' && !hasLoadedPractitioners && !isLoadingPractitioners) {
+      void loadPractitioners();
+    }
+  }, [hasLoadedPractitioners, isLoadingPractitioners, practitionerSource]);
 
   async function loadPatients() {
-    setIsLoadingClinikoPatients(true);
-    setClinikoError(null);
-    setExpandedPatientId(null);
-    setSelectedAppointmentIds(new Set());
-    setAppointmentsByPatientId({});
+    setIsLoadingPatients(true);
+    setPatientError(null);
 
     try {
-      const patients = await listClinikoPatients();
-      setClinikoPatients(patients);
-      setHasLoadedClinikoPatients(true);
+      setClinikoPatients(await listClinikoPatients());
+      setHasLoadedPatients(true);
     } catch (error) {
-      setClinikoError(error instanceof Error ? error.message : 'Unable to load Cliniko patients.');
-      setHasLoadedClinikoPatients(true);
+      setPatientError(error instanceof Error ? error.message : 'Unable to load Cliniko patients.');
+      setHasLoadedPatients(true);
     } finally {
-      setIsLoadingClinikoPatients(false);
+      setIsLoadingPatients(false);
     }
   }
 
-  async function togglePatient(patientId: string) {
-    const isExpanded = expandedPatientId === patientId;
-    const nextExpandedPatientId = isExpanded ? null : patientId;
-
-    setExpandedPatientId(nextExpandedPatientId);
-    setSelectedAppointmentIds(new Set());
-
-    if (nextExpandedPatientId && !appointmentsByPatientId[patientId]) {
-      await loadAppointments(patientId);
-    }
-  }
-
-  async function loadAppointments(patientId: string) {
-    setAppointmentsByPatientId((current) => ({
-      ...current,
-      [patientId]: { appointments: current[patientId]?.appointments ?? [], isLoading: true, error: null },
-    }));
+  async function loadPractitioners() {
+    setIsLoadingPractitioners(true);
+    setPractitionerError(null);
 
     try {
-      const appointments = await listClinikoAppointments(patientId);
-      setAppointmentsByPatientId((current) => ({
-        ...current,
-        [patientId]: { appointments, isLoading: false, error: null },
-      }));
+      setClinikoPractitioners(await listClinikoPractitioners());
+      setHasLoadedPractitioners(true);
     } catch (error) {
-      setAppointmentsByPatientId((current) => ({
-        ...current,
-        [patientId]: {
-          appointments: current[patientId]?.appointments ?? [],
-          isLoading: false,
-          error: error instanceof Error ? error.message : 'Unable to load Cliniko appointments.',
-        },
-      }));
-    }
-  }
-
-  function toggleAppointment(appointmentId: string, checked: boolean) {
-    setSelectedAppointmentIds((current) => {
-      const next = new Set(current);
-
-      if (checked) {
-        next.add(appointmentId);
-      } else {
-        next.delete(appointmentId);
-      }
-
-      return next;
-    });
-  }
-
-  async function importSelectedAppointments() {
-    setIsImportingCliniko(true);
-    setClinikoError(null);
-
-    try {
-      const clinicalNote = await importClinikoAppointments([...selectedAppointmentIds]);
-      setNotes(clinicalNote);
-      setDraftError(null);
-      setMethod('notes');
-      window.scrollTo({ top: 0 });
-    } catch (error) {
-      setClinikoError(error instanceof Error ? error.message : 'Unable to import Cliniko appointment notes.');
+      setPractitionerError(error instanceof Error ? error.message : 'Unable to load Cliniko practitioners.');
+      setHasLoadedPractitioners(true);
     } finally {
-      setIsImportingCliniko(false);
+      setIsLoadingPractitioners(false);
     }
   }
+
+  function buildStartContext(): HomeStartContext {
+    return {
+      patient: {
+        source: patientSource,
+        selected: patientSource === 'cliniko' ? selectedPatient : null,
+      },
+      practitioner: {
+        source: practitionerSource,
+        selected: practitionerSource === 'cliniko' ? selectedPractitioner : null,
+      },
+    };
+  }
+
+  const needsPatientSelection = patientSource === 'cliniko' && !selectedPatient;
+  const needsPractitionerSelection = practitionerSource === 'cliniko' && !selectedPractitioner;
+  const canContinue = !needsPatientSelection && !needsPractitionerSelection;
 
   return (
     <main className="new-home-screen">
@@ -163,7 +148,7 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
                   ? 'Fill in the WorkCover WA physiotherapy treatment management plan through a guided form, then download the completed PDF.'
                   : practiceState === 'SA'
                     ? 'Fill in the ReturnToWorkSA physiotherapy management plan through a guided form, then download the completed PDF.'
-                : 'Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.'}
+                    : 'Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.'}
           </p>
         </div>
       </header>
@@ -184,153 +169,106 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
             </div>
           </div>
         ) : null}
-        <h2 id="start-heading">How do you want to start this request?</h2>
-        <div className="start-choice-grid">
-          {choices.map((choice) => (
-            <label className={`start-choice${method === choice.id ? ' is-selected' : ''}`} key={choice.id}>
-              <input type="radio" name="start-method" value={choice.id} checked={method === choice.id} onChange={() => setMethod(choice.id)} />
-              <span><strong>{choice.label}</strong><small>{choice.note}</small></span>
-            </label>
-          ))}
+
+        <div className="start-step-heading">
+          <div>
+            <p className="start-step-status">Step {step} of 2</p>
+            <h2 id="start-heading">{step === 1 ? 'Choose the details to bring into this request' : 'Choose how to start the request'}</h2>
+          </div>
+          <div className="start-step-indicator" aria-hidden="true"><span className="is-current" /><span className={step === 2 ? 'is-current' : ''} /></div>
         </div>
 
-        {method === 'notes' ? (
-          <div className="start-panel">
-            <label htmlFor="consult-notes">Consult notes</label>
-            <textarea id="consult-notes" rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Paste subjective, objective, treatment to date and plan notes here…" />
-            {draftError ? <p className="draft-error" role="alert">{draftError}</p> : null}
-            <div className="start-panel-actions">
-              <button
-                className="primary-action"
-                type="button"
-                onClick={async () => {
-                  setIsDrafting(true);
-                  setDraftError(null);
-                  try {
-                    await onStartFromNotes(notes);
-                  } catch (error) {
-                    setDraftError(error instanceof Error ? error.message : 'Unable to draft the form.');
-                  } finally {
-                    setIsDrafting(false);
-                  }
-                }}
-                disabled={!notes.trim() || isDrafting}
-              >
-                <ClipboardPaste aria-hidden="true" size={17} /> {isDrafting ? 'Drafting…' : 'Draft form'}
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {method === 'blank' ? (
-          <div className="start-panel start-panel--action">
-            <div><FilePlus2 aria-hidden="true" size={21} /><div><h3>Start with an empty request</h3><p>Your saved practitioner details will be prefilled where possible.</p></div></div>
-            <button className="primary-action" type="button" onClick={onStartBlank}>Start form <ArrowRight aria-hidden="true" size={17} /></button>
-          </div>
-        ) : null}
-
-        {method === 'cliniko' ? (
-          <div className="start-panel cliniko-import-panel">
-            <div className="cliniko-import-heading">
-              <div>
-                <Plug aria-hidden="true" size={21} />
-                <div>
-                  <h3>Import from Cliniko</h3>
-                  <p>{selectedAppointmentLabel}</p>
-                </div>
-              </div>
-              <button
-                className="ghost-action"
-                type="button"
-                onClick={() => {
-                  setHasLoadedClinikoPatients(false);
-                  void loadPatients();
-                }}
-                disabled={isLoadingClinikoPatients}
-              >
-                <RefreshCw aria-hidden="true" size={16} /> Refresh
-              </button>
-            </div>
-
-            {clinikoError ? <p className="draft-error" role="alert">{clinikoError}</p> : null}
-
-            {isLoadingClinikoPatients ? <p className="cliniko-empty">Loading Cliniko patients…</p> : null}
-
-            {!isLoadingClinikoPatients && hasLoadedClinikoPatients && clinikoPatients.length === 0 ? (
-              <p className="cliniko-empty">No active Cliniko patients were found.</p>
-            ) : null}
-
-            {clinikoPatients.length > 0 ? (
-              <div className="cliniko-patient-list">
-                {clinikoPatients.map((patient) => {
-                  const isExpanded = expandedPatientId === patient.id;
-                  const appointmentState = appointmentsByPatientId[patient.id];
-
-                  return (
-                    <article className="cliniko-patient-card" key={patient.id}>
-                      <button
-                        className="cliniko-patient-button"
-                        type="button"
-                        aria-expanded={isExpanded}
-                        onClick={() => void togglePatient(patient.id)}
-                      >
-                        <UserRound aria-hidden="true" size={18} />
-                        <span>
-                          <strong>{formatPatientName(patient)}</strong>
-                          <small>{formatPatientMeta(patient)}</small>
-                        </span>
-                        <ChevronDown aria-hidden="true" className={isExpanded ? 'is-open' : ''} size={18} />
-                      </button>
-
-                      {isExpanded ? (
-                        <div className="cliniko-appointment-list">
-                          {appointmentState?.isLoading ? <p className="cliniko-empty">Loading appointments…</p> : null}
-
-                          {appointmentState?.error ? <p className="draft-error" role="alert">{appointmentState.error}</p> : null}
-
-                          {appointmentState && !appointmentState.isLoading && appointmentState.appointments.length === 0 ? (
-                            <p className="cliniko-empty">No appointments found for this patient.</p>
-                          ) : null}
-
-                          {appointmentState?.appointments.map((appointment) => (
-                            <label
-                              className={`cliniko-appointment-row${appointment.hasNotes ? '' : ' is-disabled'}`}
-                              key={appointment.id}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedAppointmentIds.has(appointment.id)}
-                                disabled={!appointment.hasNotes}
-                                onChange={(event) => toggleAppointment(appointment.id, event.target.checked)}
-                              />
-                              <CalendarCheck2 aria-hidden="true" size={18} />
-                              <span>
-                                <strong>{formatAppointmentTitle(appointment)}</strong>
-                                <small>{appointment.hasNotes ? appointment.notesPreview : 'No transcript notes recorded'}</small>
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : null}
-                    </article>
-                  );
+        {step === 1 ? (
+          <div className="intake-source-groups">
+            <fieldset className="intake-source-group">
+              <legend><UserRound aria-hidden="true" size={18} /> Patient details</legend>
+              <p>Choose how you would like to add the patient’s details.</p>
+              <div className="start-choice-grid start-choice-grid--two">
+                {patientChoices.map((choice) => {
+                  const Icon = choice.icon;
+                  return <label className={`start-choice${patientSource === choice.id ? ' is-selected' : ''}`} key={choice.id}>
+                    <input type="radio" aria-label={choice.label} name="patient-source" value={choice.id} checked={patientSource === choice.id} onChange={() => setPatientSource(choice.id)} />
+                    <span><Icon aria-hidden="true" size={18} /><strong>{choice.label}</strong><small>{choice.note}</small></span>
+                  </label>;
                 })}
               </div>
-            ) : null}
 
-            <div className="start-panel-actions cliniko-import-actions">
-              <p>Selected appointment notes will be copied into the consult notes field for review.</p>
-              <button
-                className="primary-action"
-                type="button"
-                disabled={selectedAppointmentCount === 0 || isImportingCliniko}
-                onClick={() => void importSelectedAppointments()}
-              >
-                <ClipboardPaste aria-hidden="true" size={17} /> {isImportingCliniko ? 'Importing…' : 'Import selected'}
-              </button>
+              {patientSource === 'cliniko' ? (
+                <ClinikoSelectionPanel title="Select a patient" description="The selected patient’s available Cliniko details will be added to the request." icon={<UsersRound aria-hidden="true" size={20} />} isLoading={isLoadingPatients} error={patientError} isEmpty={hasLoadedPatients && clinikoPatients.length === 0} emptyMessage="No active Cliniko patients were found." onRefresh={() => void loadPatients()}>
+                  {clinikoPatients.map((patient) => <label className={`cliniko-selection-row${selectedPatient?.id === patient.id ? ' is-selected' : ''}`} key={patient.id}>
+                    <input type="radio" name="cliniko-patient" checked={selectedPatient?.id === patient.id} onChange={() => setSelectedPatient(patient)} />
+                    <span><strong>{formatPatientName(patient)}</strong><small>{formatPatientMeta(patient)}</small></span>
+                  </label>)}
+                </ClinikoSelectionPanel>
+              ) : null}
+            </fieldset>
+
+            <fieldset className="intake-source-group">
+              <legend><UserRound aria-hidden="true" size={18} /> Practitioner details</legend>
+              <p>Choose how you would like to add the treating practitioner’s details.</p>
+              <div className="start-choice-grid start-choice-grid--three">
+                {practitionerChoices.map((choice) => {
+                  const Icon = choice.icon;
+                  return <label className={`start-choice${practitionerSource === choice.id ? ' is-selected' : ''}`} key={choice.id}>
+                    <input type="radio" aria-label={choice.label} name="practitioner-source" value={choice.id} checked={practitionerSource === choice.id} onChange={() => setPractitionerSource(choice.id)} />
+                    <span><Icon aria-hidden="true" size={18} /><strong>{choice.label}</strong><small>{choice.note}</small></span>
+                  </label>;
+                })}
+              </div>
+
+              {practitionerSource === 'cliniko' ? (
+                <ClinikoSelectionPanel title="Select a practitioner" description="Cliniko supplies the practitioner name; complete any remaining practitioner fields in the request." icon={<UserRound aria-hidden="true" size={20} />} isLoading={isLoadingPractitioners} error={practitionerError} isEmpty={hasLoadedPractitioners && clinikoPractitioners.length === 0} emptyMessage="No active Cliniko practitioners were found." onRefresh={() => void loadPractitioners()}>
+                  {clinikoPractitioners.map((practitioner) => <label className={`cliniko-selection-row${selectedPractitioner?.id === practitioner.id ? ' is-selected' : ''}`} key={practitioner.id}>
+                    <input type="radio" name="cliniko-practitioner" checked={selectedPractitioner?.id === practitioner.id} onChange={() => setSelectedPractitioner(practitioner)} />
+                    <span><strong>{practitioner.name}</strong><small>{practitioner.designation || 'Cliniko practitioner'}</small></span>
+                  </label>)}
+                </ClinikoSelectionPanel>
+              ) : null}
+            </fieldset>
+
+            <div className="start-panel-actions intake-next-action">
+              <p>{canContinue ? 'You can change these choices later by returning to this step.' : 'Select each Cliniko record you chose before continuing.'}</p>
+              <button className="primary-action" type="button" disabled={!canContinue} onClick={() => setStep(2)}>Continue <ArrowRight aria-hidden="true" size={17} /></button>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="start-method-step">
+            <div className="start-choice-grid start-choice-grid--two">
+              {startChoices.map((choice) => {
+                const Icon = choice.icon;
+                return <label className={`start-choice${method === choice.id ? ' is-selected' : ''}`} key={choice.id}>
+                  <input type="radio" aria-label={choice.label} name="start-method" value={choice.id} checked={method === choice.id} onChange={() => setMethod(choice.id)} />
+                  <span><Icon aria-hidden="true" size={18} /><strong>{choice.label}</strong><small>{choice.note}</small></span>
+                </label>;
+              })}
+            </div>
+
+            {method === 'notes' ? (
+              <div className="start-panel">
+                <label htmlFor="consult-notes">Consult notes</label>
+                <textarea id="consult-notes" rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Paste subjective, objective, treatment to date and plan notes here…" />
+                {draftError ? <p className="draft-error" role="alert">{draftError}</p> : null}
+                <div className="start-panel-actions">
+                  <button className="ghost-action" type="button" onClick={() => setStep(1)}><ArrowLeft aria-hidden="true" size={17} /> Back</button>
+                  <button className="primary-action" type="button" onClick={async () => {
+                    setIsDrafting(true);
+                    setDraftError(null);
+                    try { await onStartFromNotes(notes, buildStartContext()); }
+                    catch (error) { setDraftError(error instanceof Error ? error.message : 'Unable to draft the form.'); }
+                    finally { setIsDrafting(false); }
+                  }} disabled={!notes.trim() || isDrafting}>
+                    <ClipboardPaste aria-hidden="true" size={17} /> {isDrafting ? 'Drafting…' : 'Draft form'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="start-panel start-panel--action">
+                <div><FilePlus2 aria-hidden="true" size={21} /><div><h3>Open the request</h3><p>Your selected patient and practitioner details will be added where available.</p></div></div>
+                <div className="start-panel-actions"><button className="ghost-action" type="button" onClick={() => setStep(1)}><ArrowLeft aria-hidden="true" size={17} /> Back</button><button className="primary-action" type="button" onClick={() => onStartBlank(buildStartContext())}>Open form <ArrowRight aria-hidden="true" size={17} /></button></div>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="requests-empty" aria-labelledby="requests-heading">
@@ -341,37 +279,38 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
   );
 }
 
-function formatPatientName(patient: ClinikoPatient) {
-  const preferredName = patient.preferredFirstName || patient.firstName;
-  const name = [preferredName, patient.lastName].filter(Boolean).join(' ');
+interface ClinikoSelectionPanelProps {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  isLoading: boolean;
+  error: string | null;
+  isEmpty: boolean;
+  emptyMessage: string;
+  onRefresh: () => void;
+  children: ReactNode;
+}
 
-  return name || 'Unnamed patient';
+function ClinikoSelectionPanel({ title, description, icon, isLoading, error, isEmpty, emptyMessage, onRefresh, children }: ClinikoSelectionPanelProps) {
+  return <div className="cliniko-selection-panel">
+    <div className="cliniko-import-heading"><div>{icon}<div><h3>{title}</h3><p>{description}</p></div></div><button className="ghost-action" type="button" onClick={onRefresh} disabled={isLoading}><RefreshCw aria-hidden="true" size={16} /> Refresh</button></div>
+    {error ? <p className="draft-error" role="alert">{error}</p> : null}
+    {isLoading ? <p className="cliniko-empty">Loading Cliniko records…</p> : null}
+    {isEmpty ? <p className="cliniko-empty">{emptyMessage}</p> : null}
+    {!isLoading && !error ? <div className="cliniko-selection-list">{children}</div> : null}
+  </div>;
+}
+
+function formatPatientName(patient: ClinikoPatient) {
+  return [patient.preferredFirstName || patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unnamed patient';
 }
 
 function formatPatientMeta(patient: ClinikoPatient) {
-  const parts = [
-    patient.dateOfBirth ? `DOB ${formatDate(patient.dateOfBirth)}` : '',
-    patient.phone,
-    patient.email,
-  ].filter(Boolean);
-
+  const parts = [patient.dateOfBirth ? `DOB ${formatDate(patient.dateOfBirth)}` : '', patient.phone, patient.email].filter(Boolean);
   return parts.length ? parts.join(' · ') : 'No contact details recorded';
-}
-
-function formatAppointmentTitle(appointment: ClinikoAppointmentSummary) {
-  return [formatDateTime(appointment.startsAt), appointment.appointmentType].filter(Boolean).join(' · ');
 }
 
 function formatDate(value: string) {
   const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
-}
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
 }

@@ -20,6 +20,12 @@ export interface ClinikoAppointmentSummary {
   notesPreview: string;
 }
 
+export interface ClinikoPractitioner {
+  id: string;
+  name: string;
+  designation: string | null;
+}
+
 export interface ClinikoImportedAppointment {
   id: string;
   startsAt: string;
@@ -37,6 +43,11 @@ interface PatientsResponse {
 
 interface AppointmentsResponse {
   appointments?: ClinikoAppointmentSummary[];
+  error?: string;
+}
+
+interface PractitionersResponse {
+  practitioners?: ClinikoPractitioner[];
   error?: string;
 }
 
@@ -66,6 +77,17 @@ export async function listClinikoAppointments(patientId: string): Promise<Clinik
   }
 
   return result.appointments ?? [];
+}
+
+export async function listClinikoPractitioners(): Promise<ClinikoPractitioner[]> {
+  const response = await fetch('/api/cliniko-import?action=practitioners');
+  const result = (await response.json()) as PractitionersResponse;
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Unable to load Cliniko practitioners.');
+  }
+
+  return result.practitioners ?? [];
 }
 
 export async function importClinikoAppointments(appointmentIds: string[]): Promise<string> {

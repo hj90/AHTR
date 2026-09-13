@@ -46,6 +46,20 @@ async function handleGet(request, response) {
     });
   }
 
+  if (action === 'practitioners') {
+    const practitioners = await cliniko.get(buildPath('/practitioners', {
+      page: url.searchParams.get('page') || 1,
+      per_page: 100,
+      sort: 'updated_at:desc',
+    }));
+
+    return response.status(200).json({
+      practitioners: (practitioners.practitioners ?? []).map(mapPractitioner),
+      totalEntries: practitioners.total_entries ?? null,
+      hasMore: Boolean(practitioners.links?.next),
+    });
+  }
+
   if (action === 'appointments') {
     const patientId = requireId(url.searchParams.get('patientId'), 'patientId');
     const appointments = await cliniko.get(buildPath('/individual_appointments', {
@@ -147,6 +161,14 @@ function mapAppointmentSummary(appointment) {
     practitioner: formatPersonName(appointment.practitioner),
     hasNotes: Boolean(appointment.notes?.trim()),
     notesPreview: previewText(appointment.notes),
+  };
+}
+
+function mapPractitioner(practitioner) {
+  return {
+    id: String(practitioner.id),
+    name: practitioner.display_name || practitioner.label || formatPersonName(practitioner) || 'Unnamed practitioner',
+    designation: practitioner.designation ?? null,
   };
 }
 
