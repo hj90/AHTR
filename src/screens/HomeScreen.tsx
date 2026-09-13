@@ -19,7 +19,7 @@ import type { ClinikoAppointmentSummary, ClinikoPatient } from '../integrations/
 type StartMethod = 'notes' | 'blank' | 'cliniko';
 
 interface HomeScreenProps {
-  practiceState: 'NSW' | 'VIC';
+  practiceState: 'NSW' | 'VIC' | 'QLD';
   onStartBlank: () => void;
   onStartFromNotes: (notes: string) => Promise<void>;
 }
@@ -159,7 +159,9 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
           <p>
             {practiceState === 'VIC'
               ? 'Fill in the WorkSafe Victoria allied health recovery management plan through a guided form, then download the completed PDF.'
-              : 'Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.'}
+              : practiceState === 'QLD'
+                ? 'Fill in the WorkCover Queensland provider management plan through a guided form, then download the completed PDF.'
+                : 'Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.'}
           </p>
         </div>
       </header>

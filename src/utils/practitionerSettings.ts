@@ -4,7 +4,7 @@ import { getInitialFormValues } from './formState';
 export const demoUserId = '11111111-1111-4111-8111-111111111111';
 
 export interface PractitionerSettings {
-  practiceState: 'NSW' | 'VIC';
+  practiceState: 'NSW' | 'VIC' | 'QLD';
   practitionerName: string;
   ahpraNumber: string;
   discipline: string;
@@ -71,6 +71,23 @@ export function getNewFormValues(
     values.vicInitialPlan = true;
   }
 
+  if (template.id === 'workcover-queensland-provider-management-plan') {
+    const disciplineFieldBySetting: Record<string, string> = {
+      Physiotherapist: 'qldServicePhysiotherapy',
+      Osteopath: 'qldServiceOsteopathy',
+      Chiropractor: 'qldServiceChiropractic',
+      Podiatrist: 'qldServicePodiatry',
+      'Occupational Therapist': 'qldServiceOccupationalTherapy',
+      'Accredited Exercise Physiologist': 'qldServiceExercisePhysiology',
+      Psychologist: 'qldServicePsychology',
+    };
+    const disciplineField = disciplineFieldBySetting[settings.discipline];
+    if (disciplineField) values[disciplineField] = true;
+    values.qldProviderContactDetails = [settings.practitionerName, settings.practiceEmail, settings.practicePhone]
+      .filter(Boolean)
+      .join('\n');
+  }
+
   return values;
 }
 
@@ -106,6 +123,6 @@ export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null):
     practicePhone: row.practice_phone ?? '',
     practiceEmail: row.practice_email ?? '',
     practiceAddress: row.practice_address ?? '',
-    practiceState: row.practice_state === 'VIC' ? 'VIC' : 'NSW',
+    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' ? row.practice_state : 'NSW',
   };
 }

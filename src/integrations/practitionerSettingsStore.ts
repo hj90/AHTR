@@ -36,7 +36,8 @@ const legacyUserColumns = [
 const practiceStateStorageKey = 'ahtr-practice-state';
 
 function loadLocalPracticeState(): PractitionerSettings['practiceState'] {
-  return window.localStorage.getItem(practiceStateStorageKey) === 'VIC' ? 'VIC' : 'NSW';
+  const storedState = window.localStorage.getItem(practiceStateStorageKey);
+  return storedState === 'VIC' || storedState === 'QLD' ? storedState : 'NSW';
 }
 
 function saveLocalPracticeState(state: PractitionerSettings['practiceState']) {
