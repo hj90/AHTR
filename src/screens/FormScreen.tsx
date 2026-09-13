@@ -1,6 +1,5 @@
 import { ArrowLeft, ArrowRight, ClipboardCheck, RotateCcw } from 'lucide-react';
 import { FormSection } from '../components/FormSection';
-import { PrivacyNotice } from '../components/PrivacyNotice';
 import { SectionRail } from '../components/SectionRail';
 import type { FieldValue, FormValues, PdfTemplateDefinition } from '../forms/formTypes';
 import { getSectionProgress } from '../utils/sectionProgress';
@@ -13,6 +12,7 @@ interface FormScreenProps {
   activeSectionId: string | null;
   onChange: (fieldId: string, value: FieldValue) => void;
   onSectionChange: (sectionId: string) => void;
+  onBackHome: () => void;
   onReview: () => void;
   onClear: () => void;
 }
@@ -24,6 +24,7 @@ export function FormScreen({
   activeSectionId,
   onChange,
   onSectionChange,
+  onBackHome,
   onReview,
   onClear,
 }: FormScreenProps) {
@@ -47,8 +48,17 @@ export function FormScreen({
   return (
     <main className="workspace-shell">
       <header className="workspace-header">
-        <div>
-          <p className="screen-label">Local browser session</p>
+        <div className="form-header-copy">
+          <div className="form-request-navigation">
+            <button className="text-action form-back-home" type="button" onClick={onBackHome}>
+              <ArrowLeft aria-hidden="true" size={16} />
+              All requests
+            </button>
+            <span className="form-header-divider" aria-hidden="true" />
+            {values.personName ? <strong>{String(values.personName)}</strong> : <strong>Current request</strong>}
+            {values.claimNumber ? <span className="form-header-claim">{String(values.claimNumber)}</span> : null}
+            {values.requestNumber ? <span>Request {String(values.requestNumber)}</span> : null}
+          </div>
           <h1>{template.name}</h1>
         </div>
         <button className="ghost-action" type="button" onClick={onClear}>
@@ -56,8 +66,6 @@ export function FormScreen({
           Clear form
         </button>
       </header>
-
-      <PrivacyNotice />
 
       {errorCount > 0 ? (
         <div className="error-summary" role="alert" aria-live="polite">

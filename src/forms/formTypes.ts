@@ -24,6 +24,7 @@ export type PdfFieldMapping =
       pdfFieldType?: 'text' | 'checkbox' | 'buttonGroup' | 'radio' | 'dropdown';
       exportValue?: string;
       exportValueByValue?: Record<string, string>;
+      fontSize?: number;
     }
   | {
       mode: 'overlay';

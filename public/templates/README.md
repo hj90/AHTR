@@ -1,6 +1,14 @@
 # PDF Templates
 
-This local v0 uses `sira-allied-health-treatment-request-form.pdf` as the active template. It was copied from the supplied SIRA Allied health treatment request form.
+The app currently includes five official blank templates:
+
+- `sira-allied-health-treatment-request-form.pdf` for NSW
+- `worksafe-victoria-allied-health-recovery-management-plan.pdf` for Victorian work-injury claims
+- `workcover-queensland-provider-management-plan.pdf` for Queensland workers' compensation claims
+- `workcover-western-australia-physiotherapy-treatment-management-plan.pdf` for Western Australian physiotherapy claims
+- `return-to-work-south-australia-physiotherapy-management-plan.pdf` for South Australian physiotherapy claims
+
+Transport-accident claims are shown as coming soon and do not yet have a template.
 
 The folder also includes `demo-allied-health-referral.pdf`, a synthetic fixture created by `npm run create-demo-template`. When Poppler or the macOS image converter is available, the same script also renders `demo-allied-health-referral-preview.png` for fixture preview work.
 

@@ -14,10 +14,16 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck",
+    "benchmark:notes": "node scripts/benchmark-note-parser.mjs",
     "inspect-pdf": "tsx scripts/inspect-pdf-fields.ts",
+    "supabase:apply-demo-migration": "node scripts/apply-supabase-migration.mjs",
+    "cliniko:smoke": "node scripts/cliniko-smoke.mjs",
+    "cliniko:seed-demo": "node scripts/seed-cliniko-demo.mjs",
+    "cliniko:seed-demo:apply": "node scripts/seed-cliniko-demo.mjs --apply --confirm-clear-all-patients",
     "create-demo-template": "node scripts/create-demo-template.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "lucide-react": "^0.468.0",
     "pdf-lib": "^1.17.1",
     "react": "^18.3.1",

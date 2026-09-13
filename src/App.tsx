@@ -1,20 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
-import { formRegistry } from './forms/formRegistry';
+import { getFormForPracticeState } from './forms/formRegistry';
 import type { FieldValue, FormValues } from './forms/formTypes';
+import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
 import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import type { HomeStartContext } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
+import {
+  clearPractitionerSettings,
+  loadPractitionerSettings,
+  savePractitionerSettings,
+} from './integrations/practitionerSettingsStore';
 import { withCalculatedServiceTotals } from './utils/calculations';
 import { createGenericDownloadName, createPdfObjectUrl } from './utils/download';
 import { clearGeneratedPdfUrl, getInitialFormValues, resetFormState } from './utils/formState';
 import { hasErrors, validateTemplate } from './utils/validation';
 import type { ValidationErrors } from './utils/validation';
+import {
+  emptyPractitionerSettings,
+  getNewFormValues,
+} from './utils/practitionerSettings';
+import type { PractitionerSettings } from './utils/practitionerSettings';
+import { parseConsultNotes } from './utils/noteParser';
 
-type Screen = 'home' | 'form' | 'review' | 'complete';
+type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
 export default function App() {
-  const template = formRegistry[0];
+  const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
+    emptyPractitionerSettings,
+  );
+  const template = useMemo(
+    () => getFormForPracticeState(practitionerSettings.practiceState),
+    [practitionerSettings.practiceState],
+  );
   const [screen, setScreen] = useState<Screen>('home');
   const [values, setValues] = useState<FormValues>(() => getInitialFormValues(template));
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -22,12 +42,38 @@ export default function App() {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
+  );
 
   const downloadName = useMemo(() => createGenericDownloadName(template), [template]);
 
   useEffect(() => {
     return () => clearGeneratedPdfUrl(generatedPdfUrl);
   }, [generatedPdfUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        const storedSettings = await loadPractitionerSettings();
+        if (!cancelled) {
+          setPractitionerSettings(storedSettings);
+        }
+      } catch {
+        if (!cancelled) {
+          setPractitionerSettings(emptyPractitionerSettings);
+        }
+      }
+    }
+
+    void loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function updateField(fieldId: string, value: FieldValue) {
     setValues((currentValues) => withCalculatedServiceTotals(currentValues, fieldId, value));
@@ -42,9 +88,45 @@ export default function App() {
     });
   }
 
-  function startForm() {
+  function startForm(context: HomeStartContext) {
+    setValues(getStartValues(context));
+    setErrors({});
+    setGenerationError(null);
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
+    window.scrollTo({ top: 0 });
+  }
+
+  async function startFormFromNotes(notes: string, context: HomeStartContext) {
+    const baseValues = getStartValues(context);
+    const profileForDraft = context.practitioner.source === 'settings'
+      ? practitionerSettings
+      : emptyPractitionerSettings;
+    const draft = await parseConsultNotes(notes, profileForDraft, template);
+    setValues(applyImportedDetails({ ...baseValues, ...draft.values }, context));
+    setErrors({});
+    setGenerationError(null);
+    setScreen('form');
+    setActiveSectionId(template.sections[0]?.id ?? null);
+    window.scrollTo({ top: 0 });
+  }
+
+  async function saveSettings(nextSettings: PractitionerSettings) {
+    const storedSettings = await savePractitionerSettings(nextSettings);
+    setPractitionerSettings(storedSettings);
+  }
+
+  async function clearSettings() {
+    await clearPractitionerSettings();
+    setPractitionerSettings(emptyPractitionerSettings);
+  }
+
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem('ahtr-sidebar-collapsed', String(next));
+      return next;
+    });
   }
 
   function reviewForm() {
@@ -94,7 +176,7 @@ export default function App() {
 
   function clearForm() {
     const clearedState = resetFormState(template, generatedPdfUrl);
-    setValues(clearedState.values);
+    setValues({ ...clearedState.values, ...getNewFormValues(template, practitionerSettings) });
     setGeneratedPdfUrl(clearedState.generatedPdfUrl);
     setErrors({});
     setGenerationError(null);
@@ -103,8 +185,48 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
 
+  function getStartValues(context: HomeStartContext) {
+    const baseValues = getNewFormValues(template, practitionerSettings);
+
+    if (context.practitioner.source !== 'settings') {
+      clearSavedPractitionerValues(baseValues);
+    }
+
+    return applyImportedDetails(baseValues, context);
+  }
+
   if (screen === 'home') {
-    return <HomeScreen template={template} onStart={startForm} />;
+    return (
+      <AppShell
+        activePage="home"
+        collapsed={sidebarCollapsed}
+        onNavigate={setScreen}
+        onToggle={toggleSidebar}
+      >
+        <HomeScreen
+          practiceState={practitionerSettings.practiceState}
+          onStartBlank={startForm}
+          onStartFromNotes={startFormFromNotes}
+        />
+      </AppShell>
+    );
+  }
+
+  if (screen === 'settings') {
+    return (
+      <AppShell
+        activePage="settings"
+        collapsed={sidebarCollapsed}
+        onNavigate={setScreen}
+        onToggle={toggleSidebar}
+      >
+        <SettingsScreen
+          settings={practitionerSettings}
+          onSave={saveSettings}
+          onClear={clearSettings}
+        />
+      </AppShell>
+    );
   }
 
   if (screen === 'review') {
@@ -139,8 +261,62 @@ export default function App() {
       activeSectionId={activeSectionId}
       onChange={updateField}
       onSectionChange={changeSection}
+      onBackHome={() => setScreen('home')}
       onReview={reviewForm}
       onClear={clearForm}
     />
   );
+}
+
+function applyImportedDetails(values: FormValues, context: HomeStartContext): FormValues {
+  const nextValues = { ...values };
+
+  if (context.patient.source === 'cliniko' && context.patient.selected) {
+    nextValues.personName = [
+      context.patient.selected.preferredFirstName || context.patient.selected.firstName,
+      context.patient.selected.lastName,
+    ].filter(Boolean).join(' ');
+    if (context.patient.selected.dateOfBirth) {
+      nextValues.dateOfBirth = context.patient.selected.dateOfBirth;
+    }
+  }
+
+  if (context.practitioner.source === 'cliniko' && context.practitioner.selected) {
+    nextValues.practitionerName = context.practitioner.selected.name;
+  }
+
+  return nextValues;
+}
+
+function clearSavedPractitionerValues(values: FormValues) {
+  const settingFieldIds = [
+    'discipline',
+    'practitionerName',
+    'ahpraNumber',
+    'siraApprovalNumber',
+    'practiceName',
+    'phoneNumber',
+    'practiceEmail',
+    'treatingPractitionerEmail',
+    'practiceAddress',
+    'qldProviderContactDetails',
+    'saFunctionalProviderName',
+    'vicDisciplinePhysiotherapy',
+    'vicDisciplineOsteopathy',
+    'vicDisciplineChiropractic',
+    'vicDisciplinePodiatry',
+    'vicDisciplineOccupationalTherapy',
+    'vicDisciplineExercisePhysiology',
+    'qldServicePhysiotherapy',
+    'qldServiceOsteopathy',
+    'qldServiceChiropractic',
+    'qldServicePodiatry',
+    'qldServiceOccupationalTherapy',
+    'qldServiceExercisePhysiology',
+    'qldServicePsychology',
+  ];
+
+  for (const fieldId of settingFieldIds) {
+    delete values[fieldId];
+  }
 }
