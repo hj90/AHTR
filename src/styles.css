@@ -1071,26 +1071,6 @@ dd {
   margin-top: 12px;
 }
 
-.start-panel > .ai-consent {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-top: 12px;
-  margin-bottom: 0;
-  color: var(--ink-muted);
-  font-size: 0.76rem;
-  line-height: 1.45;
-  cursor: pointer;
-}
-
-.ai-consent input {
-  width: 17px;
-  height: 17px;
-  flex: 0 0 auto;
-  margin: 1px 0 0;
-  accent-color: var(--accent);
-}
-
 .start-panel .draft-error {
   margin-top: 10px;
   color: var(--safety);

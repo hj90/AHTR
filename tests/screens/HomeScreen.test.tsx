@@ -73,7 +73,7 @@ describe('HomeScreen Cliniko import', () => {
       expect(screen.getByLabelText('Consult notes')).toHaveValue('Collated Cliniko transcript text');
     });
 
-    expect(screen.getByRole('button', { name: /Draft form/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Draft form/i })).toBeEnabled();
     expect(onStartFromNotes).not.toHaveBeenCalled();
     expect(scrollTo).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith('/api/cliniko-import', expect.objectContaining({ method: 'POST' }));

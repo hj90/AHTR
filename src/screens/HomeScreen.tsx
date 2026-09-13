@@ -40,7 +40,6 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
   const [victoriaClaimType, setVictoriaClaimType] = useState<'work' | 'transport'>('work');
   const [method, setMethod] = useState<StartMethod>('blank');
   const [notes, setNotes] = useState('');
-  const [consent, setConsent] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [clinikoPatients, setClinikoPatients] = useState<ClinikoPatient[]>([]);
@@ -140,7 +139,6 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
     try {
       const clinicalNote = await importClinikoAppointments([...selectedAppointmentIds]);
       setNotes(clinicalNote);
-      setConsent(false);
       setDraftError(null);
       setMethod('notes');
       window.scrollTo({ top: 0 });
@@ -200,13 +198,8 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
           <div className="start-panel">
             <label htmlFor="consult-notes">Consult notes</label>
             <textarea id="consult-notes" rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Paste subjective, objective, treatment to date and plan notes here…" />
-            <label className="ai-consent">
-              <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
-              <span>I understand these clinical notes will be sent to OpenAI to create a draft and must be reviewed before use.</span>
-            </label>
             {draftError ? <p className="draft-error" role="alert">{draftError}</p> : null}
             <div className="start-panel-actions">
-              <p><strong>Experimental:</strong> automatic parsing may not fill fields yet. Anything missing remains blank.</p>
               <button
                 className="primary-action"
                 type="button"
@@ -221,7 +214,7 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
                     setIsDrafting(false);
                   }
                 }}
-                disabled={!notes.trim() || !consent || isDrafting}
+                disabled={!notes.trim() || isDrafting}
               >
                 <ClipboardPaste aria-hidden="true" size={17} /> {isDrafting ? 'Drafting…' : 'Draft form'}
               </button>
