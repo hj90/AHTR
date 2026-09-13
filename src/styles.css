@@ -1173,6 +1173,12 @@ dd {
   line-height: 1.45;
 }
 
+.intake-next-action > div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
 .start-method-step {
   display: grid;
   gap: 2px;
@@ -1326,6 +1332,10 @@ dd {
 }
 
 .cliniko-patient-button > span {
+  flex: 1 1 auto;
+}
+
+.cliniko-appointment-row > span {
   flex: 1 1 auto;
 }
 
@@ -1711,8 +1721,14 @@ dd {
   }
 
   .cliniko-import-heading > .ghost-action,
-  .cliniko-import-actions > .primary-action {
+  .cliniko-import-actions > .primary-action,
+  .start-panel-actions > .ghost-action,
+  .start-panel-actions > .primary-action {
     justify-content: center;
+    width: 100%;
+  }
+
+  .intake-next-action > div {
     width: 100%;
   }
 
