@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { demoAlliedHealthReferral } from '../../src/forms/templates/demoAlliedHealthReferral';
 import { worksafeVictoriaAlliedHealthRecoveryManagementPlan } from '../../src/forms/templates/worksafeVictoriaAlliedHealthRecoveryManagementPlan';
 import { workcoverQueenslandProviderManagementPlan } from '../../src/forms/templates/workcoverQueenslandProviderManagementPlan';
+import { workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan } from '../../src/forms/templates/workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan';
 import {
   demoUserId,
   emptyPractitionerSettings,
@@ -84,5 +85,18 @@ describe('practitioner settings helpers', () => {
 
     expect(values.qldServicePhysiotherapy).toBe(true);
     expect(values.qldProviderContactDetails).toBe('Alex Clinician\nalex@example.test\n07 3000 0000');
+  });
+
+  it('selects physiotherapy on the WorkCover WA form', () => {
+    const values = getNewFormValues(workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan, {
+      ...emptyPractitionerSettings,
+      practiceState: 'WA',
+      practitionerName: 'Alex Clinician',
+      practiceName: 'Example Physiotherapy',
+    });
+
+    expect(values.waPhysiotherapyConsultations).toBe(true);
+    expect(values.practitionerName).toBe('Alex Clinician');
+    expect(values.practiceName).toBe('Example Physiotherapy');
   });
 });

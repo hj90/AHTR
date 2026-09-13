@@ -4,7 +4,7 @@ import { getInitialFormValues } from './formState';
 export const demoUserId = '11111111-1111-4111-8111-111111111111';
 
 export interface PractitionerSettings {
-  practiceState: 'NSW' | 'VIC' | 'QLD';
+  practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA';
   practitionerName: string;
   ahpraNumber: string;
   discipline: string;
@@ -88,6 +88,10 @@ export function getNewFormValues(
       .join('\n');
   }
 
+  if (template.id === 'workcover-western-australia-physiotherapy-treatment-management-plan') {
+    values.waPhysiotherapyConsultations = true;
+  }
+
   return values;
 }
 
@@ -123,6 +127,8 @@ export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null):
     practicePhone: row.practice_phone ?? '',
     practiceEmail: row.practice_email ?? '',
     practiceAddress: row.practice_address ?? '',
-    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' ? row.practice_state : 'NSW',
+    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' || row.practice_state === 'WA'
+      ? row.practice_state
+      : 'NSW',
   };
 }

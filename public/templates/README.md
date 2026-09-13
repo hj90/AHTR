@@ -5,6 +5,7 @@ The app currently includes two official blank templates:
 - `sira-allied-health-treatment-request-form.pdf` for NSW
 - `worksafe-victoria-allied-health-recovery-management-plan.pdf` for Victorian work-injury claims
 - `workcover-queensland-provider-management-plan.pdf` for Queensland workers' compensation claims
+- `workcover-western-australia-physiotherapy-treatment-management-plan.pdf` for Western Australian physiotherapy claims
 
 Transport-accident claims are shown as coming soon and do not yet have a template.
 

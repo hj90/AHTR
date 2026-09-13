@@ -41,7 +41,8 @@ export function renderAcroField(
     }
 
     if (pdfFieldType === 'radio') {
-      form.getRadioGroup(field.pdf.fieldName).select(String(value));
+      const exportValue = field.pdf.exportValueByValue?.[String(value)] ?? String(value);
+      form.getRadioGroup(field.pdf.fieldName).select(exportValue);
       return;
     }
 

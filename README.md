@@ -68,7 +68,7 @@ The end-to-end test records app-controlled network requests and checks that dist
 
 ## PDF Templates
 
-The state selected in Settings determines the active form. NSW uses the SIRA Allied Health Treatment Request, Victoria uses the official WorkSafe Allied Health Recovery Management Plan, and Queensland uses WorkCover Queensland's Provider Management Plan (Form 32). Their mappings live in `src/forms/templates/`.
+The state selected in Settings determines the active form. NSW uses the SIRA Allied Health Treatment Request, Victoria uses the official WorkSafe Allied Health Recovery Management Plan, Queensland uses WorkCover Queensland's Provider Management Plan (Form 32), and Western Australia uses WorkCover WA's Physiotherapy Treatment Management Plan. Their mappings live in `src/forms/templates/`.
 
 Apply the practice-state migrations to persist the selection in Supabase. Until then, the state selection falls back to browser storage while the other practitioner settings continue to use the existing database schema.
 
