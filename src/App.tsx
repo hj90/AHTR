@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { formRegistry } from './forms/formRegistry';
+import { getFormForPracticeState } from './forms/formRegistry';
 import type { FieldValue, FormValues } from './forms/formTypes';
 import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
@@ -27,7 +27,13 @@ import { parseConsultNotes } from './utils/noteParser';
 type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
 export default function App() {
-  const template = formRegistry[0];
+  const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
+    emptyPractitionerSettings,
+  );
+  const template = useMemo(
+    () => getFormForPracticeState(practitionerSettings.practiceState),
+    [practitionerSettings.practiceState],
+  );
   const [screen, setScreen] = useState<Screen>('home');
   const [values, setValues] = useState<FormValues>(() => getInitialFormValues(template));
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -36,9 +42,6 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [draftSummary, setDraftSummary] = useState<string | null>(null);
-  const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
-    emptyPractitionerSettings,
-  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
   );
@@ -202,7 +205,11 @@ export default function App() {
         onNavigate={setScreen}
         onToggle={toggleSidebar}
       >
-        <HomeScreen onStartBlank={startForm} onStartFromNotes={startFormFromNotes} />
+        <HomeScreen
+          practiceState={practitionerSettings.practiceState}
+          onStartBlank={startForm}
+          onStartFromNotes={startFormFromNotes}
+        />
       </AppShell>
     );
   }

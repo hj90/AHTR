@@ -4,6 +4,7 @@ import { getInitialFormValues } from './formState';
 export const demoUserId = '11111111-1111-4111-8111-111111111111';
 
 export interface PractitionerSettings {
+  practiceState: 'NSW' | 'VIC';
   practitionerName: string;
   ahpraNumber: string;
   discipline: string;
@@ -24,9 +25,11 @@ export interface PractitionerSettingsRow {
   practice_phone: string;
   practice_email: string;
   practice_address: string;
+  practice_state: string;
 }
 
 export const emptyPractitionerSettings: PractitionerSettings = {
+  practiceState: 'NSW',
   practitionerName: '',
   ahpraNumber: '',
   discipline: '',
@@ -41,7 +44,7 @@ export function getNewFormValues(
   template: PdfTemplateDefinition,
   settings: PractitionerSettings,
 ): FormValues {
-  return {
+  const values: FormValues = {
     ...getInitialFormValues(template),
     discipline: settings.discipline,
     practitionerName: settings.practitionerName,
@@ -51,7 +54,24 @@ export function getNewFormValues(
     phoneNumber: settings.practicePhone,
     practiceEmail: settings.practiceEmail,
     treatingPractitionerEmail: settings.practiceEmail,
+    practiceAddress: settings.practiceAddress,
   };
+
+  if (template.id === 'worksafe-victoria-allied-health-recovery-management-plan') {
+    const disciplineFieldBySetting: Record<string, string> = {
+      Physiotherapist: 'vicDisciplinePhysiotherapy',
+      Osteopath: 'vicDisciplineOsteopathy',
+      Chiropractor: 'vicDisciplineChiropractic',
+      Podiatrist: 'vicDisciplinePodiatry',
+      'Occupational Therapist': 'vicDisciplineOccupationalTherapy',
+      'Accredited Exercise Physiologist': 'vicDisciplineExercisePhysiology',
+    };
+    const disciplineField = disciplineFieldBySetting[settings.discipline];
+    if (disciplineField) values[disciplineField] = true;
+    values.vicInitialPlan = true;
+  }
+
+  return values;
 }
 
 export function settingsToUserRow(
@@ -68,6 +88,7 @@ export function settingsToUserRow(
     practice_phone: settings.practicePhone,
     practice_email: settings.practiceEmail,
     practice_address: settings.practiceAddress,
+    practice_state: settings.practiceState,
   };
 }
 
@@ -85,5 +106,6 @@ export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null):
     practicePhone: row.practice_phone ?? '',
     practiceEmail: row.practice_email ?? '',
     practiceAddress: row.practice_address ?? '',
+    practiceState: row.practice_state === 'VIC' ? 'VIC' : 'NSW',
   };
 }

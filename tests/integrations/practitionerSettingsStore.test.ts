@@ -33,6 +33,7 @@ describe('practitioner settings store', () => {
       practice_phone: '0290000000',
       practice_email: 'practice@example.test',
       practice_address: '1 Example Street',
+      practice_state: 'VIC',
     };
     const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
     const eq = vi.fn(() => ({ maybeSingle }));
@@ -68,6 +69,7 @@ describe('practitioner settings store', () => {
         practice_phone: '',
         practice_email: '',
         practice_address: '',
+        practice_state: 'NSW',
       },
       error: null,
     });

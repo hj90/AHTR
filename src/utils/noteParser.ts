@@ -30,7 +30,14 @@ export async function parseConsultNotes(
   const response = await fetch('/api/parse-notes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ clinicalNote, practiceProfile }),
+    body: JSON.stringify({
+      clinicalNote,
+      practiceProfile,
+      templateId: template.id,
+      formFields: template.sections.flatMap((section) =>
+        section.fields.map((field) => ({ id: field.id, label: field.label, type: field.type })),
+      ),
+    }),
   });
   const result = (await response.json()) as ParseResponse;
   if (!response.ok) throw new Error(result.error || 'Unable to draft the form from these notes.');

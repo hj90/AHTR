@@ -58,7 +58,7 @@ describe('HomeScreen Cliniko import', () => {
       throw new Error(`Unexpected request ${url}`);
     });
 
-    render(<HomeScreen onStartBlank={onStartBlank} onStartFromNotes={onStartFromNotes} />);
+    render(<HomeScreen practiceState="NSW" onStartBlank={onStartBlank} onStartFromNotes={onStartFromNotes} />);
 
     fireEvent.click(screen.getByLabelText(/Import from Cliniko/i));
 
@@ -147,7 +147,7 @@ describe('HomeScreen Cliniko import', () => {
       throw new Error(`Unexpected request ${url}`);
     });
 
-    render(<HomeScreen onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
+    render(<HomeScreen practiceState="NSW" onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
 
     fireEvent.click(screen.getByLabelText(/Import from Cliniko/i));
     fireEvent.click(await screen.findByRole('button', { name: /Jordan Hayes/i }));
@@ -163,5 +163,16 @@ describe('HomeScreen Cliniko import', () => {
     expect(screen.queryByRole('checkbox', { name: /Shoulder review/i })).not.toBeInTheDocument();
     expect(screen.getByText('0 appointments selected')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Import selected/i })).toBeDisabled();
+  });
+});
+
+describe('HomeScreen state-specific form selection', () => {
+  it('shows WorkSafe and marks TAC as coming soon for Victoria', () => {
+    render(<HomeScreen practiceState="VIC" onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'What kind of claim is this?' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Work injury/i)).toBeChecked();
+    expect(screen.getByLabelText(/Transport accident/i)).toBeDisabled();
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
   });
 });

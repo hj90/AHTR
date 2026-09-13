@@ -68,7 +68,9 @@ The end-to-end test records app-controlled network requests and checks that dist
 
 ## PDF Templates
 
-The active PDF is `public/templates/sira-allied-health-treatment-request-form.pdf`, copied from the supplied SIRA form. Its mapping lives in `src/forms/templates/siraAlliedHealthTreatmentRequest.ts`.
+The state selected in Settings determines the active form. NSW uses the SIRA Allied Health Treatment Request; Victoria work-injury claims use the official WorkSafe Allied Health Recovery Management Plan. Their mappings live in `src/forms/templates/`.
+
+Apply `supabase/migrations/202609130001_add_practice_state.sql` to an existing demo database before saving the new state setting.
 
 A synthetic demo fixture is still present for tests and fallback development.
 

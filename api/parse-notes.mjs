@@ -1,41 +1,16 @@
-const ALLOWED_FIELD_IDS = [
-  'requestNumber', 'requestDate', 'servicesFirstCommenced', 'consultationsToDate',
-  'discipline', 'disciplineOther', 'referredBy', 'requestPhone', 'personName',
-  'dateOfBirth', 'preInjuryOccupation', 'preInjuryWorkHours', 'claimNumber',
-  'injuryDate', 'compensableInjury', 'clinicalSigns', 'riskScreeningApplied',
-  'riskToolName', 'riskDate', 'riskScore', 'preExistingConditions',
-  'hasPositionDescription', 'workPreInjuryCapacity', 'workCurrentCapacity',
-  'activitiesPreInjuryCapacity', 'activitiesCurrentCapacity', 'som1Measure',
-  'som1InitialDate', 'som1InitialScore', 'som1PreviousDate', 'som1PreviousScore',
-  'som1CurrentDate', 'som1CurrentScore', 'som2Measure', 'som2InitialDate',
-  'som2InitialScore', 'som2PreviousDate', 'som2PreviousScore', 'som2CurrentDate',
-  'som2CurrentScore', 'som3Measure', 'som3InitialDate', 'som3InitialScore',
-  'som3PreviousDate', 'som3PreviousScore', 'som3CurrentDate', 'som3CurrentScore',
-  'somInterpretation', 'barriersToRecovery', 'recoveryStrategies',
-  'directContactAssistance', 'caseConferenceAssistance', 'caseConferenceWith',
-  'collaborativeCaseReview', 'achievedLastPlanGoals', 'workGoal', 'activityGoal',
-  'selfManagement', 'intervention', 'serviceRationale', 'additionalSessions',
-  'anticipatedDischargeDate', 'changedDischargeExplanation',
-  'collaborativelyDeveloped', 'notCollaborativeReason',
-  ...Array.from({ length: 5 }, (_, index) => index + 1).flatMap((row) => [
-    `service${row}Type`, `service${row}Sessions`, `service${row}Frequency`,
-    `service${row}Code`, `service${row}Cost`, `service${row}Total`,
-  ]),
-];
-
-export const AHTR_SYSTEM_PROMPT = `You are a clinical documentation assistant mapping an allied health practitioner's consultation notes onto the NSW SIRA Allied Health Treatment Request form.
+export const AHTR_SYSTEM_PROMPT = `You are a clinical documentation assistant mapping an allied health practitioner's consultation notes onto the selected Australian insurer form.
 
 Absolute rules:
 1. Extract and reshape only facts present in the delimited inputs. Never invent, assume, diagnose, upgrade, soften, or embellish clinical facts.
 2. A recorded negative is real content. A fact that is not mentioned must not be returned.
 3. Use claim_record only for administrative fields and practice_profile only for practitioner fields. Use them verbatim.
 4. Dates must be YYYY-MM-DD. Do not calculate relative dates unless an explicit anchor date is present.
-5. Do not assume whether this is the first AHTR. Do not impose a consultation cap. Do not complete insurer-only fields or create a signature.
+5. Do not assume whether this is an initial or subsequent plan. Do not impose a consultation cap. Do not complete insurer-only fields or create a signature.
 6. Return a field only when there is useful source content. Set needsReview true whenever the value required interpretation, synthesis, calculation, or uncertainty.
 7. For radio fields use these exact values: yes, no, partially, or na. Checkbox fields use booleans.
 8. Keep goals faithful to the patient's stated aims. You may make wording specific and measurable only from details already supplied.
 9. Surface urgent or red-flag features in clinicalFlags without adding a diagnosis or advice. Keep each flag concise.
-10. Output only data matching the supplied JSON schema.`;
+10. Return only field IDs listed in form_fields. Output only data matching the supplied JSON schema.`;
 
 export const responseSchema = {
   type: 'object',
@@ -47,7 +22,7 @@ export const responseSchema = {
         type: 'object',
         additionalProperties: false,
         properties: {
-          fieldId: { type: 'string', enum: ALLOWED_FIELD_IDS },
+          fieldId: { type: 'string' },
           value: { anyOf: [{ type: 'string' }, { type: 'boolean' }, { type: 'null' }] },
           needsReview: { type: 'boolean' },
         },
@@ -125,7 +100,15 @@ export default async function handler(request, response) {
   }
 
   const practiceProfile = request.body?.practiceProfile ?? {};
-  const input = `<clinical_note>\n${clinicalNote}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n${JSON.stringify(practiceProfile)}\n</practice_profile>`;
+  const templateId = typeof request.body?.templateId === 'string' ? request.body.templateId : 'sira-allied-health-treatment-request';
+  const formFields = Array.isArray(request.body?.formFields)
+    ? request.body.formFields.slice(0, 200).map(({ id, label, type }) => ({
+        id: String(id ?? '').slice(0, 100),
+        label: String(label ?? '').slice(0, 200),
+        type: String(type ?? '').slice(0, 30),
+      }))
+    : [];
+  const input = `<selected_form>\n${templateId}\n</selected_form>\n<form_fields>\n${JSON.stringify(formFields)}\n</form_fields>\n<clinical_note>\n${clinicalNote}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n${JSON.stringify(practiceProfile)}\n</practice_profile>`;
 
   try {
     const openAIStarted = performance.now();

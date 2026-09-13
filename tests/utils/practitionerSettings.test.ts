@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { demoAlliedHealthReferral } from '../../src/forms/templates/demoAlliedHealthReferral';
+import { worksafeVictoriaAlliedHealthRecoveryManagementPlan } from '../../src/forms/templates/worksafeVictoriaAlliedHealthRecoveryManagementPlan';
 import {
   demoUserId,
   emptyPractitionerSettings,
@@ -31,6 +32,7 @@ describe('practitioner settings helpers', () => {
       practicePhone: '0290000000',
       practiceEmail: 'practice@example.test',
       practiceAddress: '1 Example Street',
+      practiceState: 'VIC',
     });
 
     expect(row).toEqual({
@@ -43,10 +45,29 @@ describe('practitioner settings helpers', () => {
       practice_phone: '0290000000',
       practice_email: 'practice@example.test',
       practice_address: '1 Example Street',
+      practice_state: 'VIC',
     });
   });
 
   it('maps missing database rows to empty settings', () => {
     expect(userRowToSettings(null)).toEqual(emptyPractitionerSettings);
+  });
+
+  it('prefills the WorkSafe Victoria form from practitioner settings', () => {
+    const values = getNewFormValues(
+      worksafeVictoriaAlliedHealthRecoveryManagementPlan,
+      {
+        ...emptyPractitionerSettings,
+        practiceState: 'VIC',
+        practitionerName: 'Alex Clinician',
+        discipline: 'Physiotherapist',
+        practiceAddress: '1 Example Street',
+      },
+    );
+
+    expect(values.practitionerName).toBe('Alex Clinician');
+    expect(values.practiceAddress).toBe('1 Example Street');
+    expect(values.vicDisciplinePhysiotherapy).toBe(true);
+    expect(values.vicInitialPlan).toBe(true);
   });
 });

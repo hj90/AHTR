@@ -28,6 +28,7 @@ const fields: Array<{
   help?: string;
 }> = [
   { key: 'practitionerName', label: 'Your name', help: 'Use the name registered with AHPRA.' },
+  { key: 'practiceState', label: 'State you practise in', help: 'Sets which insurer form your requests use.' },
   { key: 'ahpraNumber', label: 'AHPRA registration number' },
   { key: 'discipline', label: 'Allied health discipline' },
   { key: 'providerNumber', label: 'Provider or SIRA approval number' },
@@ -43,6 +44,8 @@ const disciplineOptions = [
   'Chiropractor',
   'Counsellor',
   'Osteopath',
+  'Occupational Therapist',
+  'Podiatrist',
   'Physiotherapist',
   'Psychologist',
 ];
@@ -110,7 +113,22 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           {fields.map((field) => (
             <label className="settings-field" key={field.key}>
               <span>{field.label}</span>
-              {field.key === 'discipline' ? (
+              {field.key === 'practiceState' ? (
+                <select
+                  value={draft.practiceState}
+                  onChange={(event) => {
+                    setSaveError(null);
+                    setSaveMessage('Unsaved changes.');
+                    setDraft((current) => ({
+                      ...current,
+                      practiceState: event.target.value === 'VIC' ? 'VIC' : 'NSW',
+                    }));
+                  }}
+                >
+                  <option value="NSW">New South Wales</option>
+                  <option value="VIC">Victoria</option>
+                </select>
+              ) : field.key === 'discipline' ? (
                 <select
                   value={draft.discipline}
                   onChange={(event) => {

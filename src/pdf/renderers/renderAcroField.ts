@@ -50,7 +50,11 @@ export function renderAcroField(
       return;
     }
 
-    form.getTextField(field.pdf.fieldName).setText(formatValueForPdf(field, value));
+    const textField = form.getTextField(field.pdf.fieldName);
+    if (field.pdf.fontSize) {
+      textField.acroField.setDefaultAppearance(`0 g /Helv ${field.pdf.fontSize} Tf`);
+    }
+    textField.setText(formatValueForPdf(field, value));
   } catch {
     throw new Error(`PDF_MAPPING_ERROR: fieldId=${field.id}`);
   }

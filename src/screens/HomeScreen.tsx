@@ -19,6 +19,7 @@ import type { ClinikoAppointmentSummary, ClinikoPatient } from '../integrations/
 type StartMethod = 'notes' | 'blank' | 'cliniko';
 
 interface HomeScreenProps {
+  practiceState: 'NSW' | 'VIC';
   onStartBlank: () => void;
   onStartFromNotes: (notes: string) => Promise<void>;
 }
@@ -35,7 +36,8 @@ interface AppointmentListState {
   error: string | null;
 }
 
-export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) {
+export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: HomeScreenProps) {
+  const [victoriaClaimType, setVictoriaClaimType] = useState<'work' | 'transport'>('work');
   const [method, setMethod] = useState<StartMethod>('blank');
   const [notes, setNotes] = useState('');
   const [consent, setConsent] = useState(false);
@@ -75,6 +77,7 @@ export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) 
       setHasLoadedClinikoPatients(true);
     } catch (error) {
       setClinikoError(error instanceof Error ? error.message : 'Unable to load Cliniko patients.');
+      setHasLoadedClinikoPatients(true);
     } finally {
       setIsLoadingClinikoPatients(false);
     }
@@ -153,11 +156,30 @@ export function HomeScreen({ onStartBlank, onStartFromNotes }: HomeScreenProps) 
       <header className="compact-page-header home-page-header">
         <div>
           <h1>Allied Health PDF Filler</h1>
-          <p>Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.</p>
+          <p>
+            {practiceState === 'VIC'
+              ? 'Fill in the WorkSafe Victoria allied health recovery management plan through a guided form, then download the completed PDF.'
+              : 'Fill in the SIRA allied health treatment request through a guided form, then download the completed PDF.'}
+          </p>
         </div>
       </header>
 
       <section className="start-section" aria-labelledby="start-heading">
+        {practiceState === 'VIC' ? (
+          <div className="claim-type-section">
+            <h2>What kind of claim is this?</h2>
+            <div className="claim-type-grid">
+              <label className={`start-choice${victoriaClaimType === 'work' ? ' is-selected' : ''}`}>
+                <input type="radio" name="victoria-claim-type" checked={victoriaClaimType === 'work'} onChange={() => setVictoriaClaimType('work')} />
+                <span><strong>Work injury</strong><small>Use the WorkSafe Victoria recovery management plan.</small></span>
+              </label>
+              <label className="start-choice is-disabled" aria-disabled="true">
+                <input type="radio" name="victoria-claim-type" disabled checked={victoriaClaimType === 'transport'} onChange={() => setVictoriaClaimType('transport')} />
+                <span><strong>Transport accident</strong><small>Coming soon</small></span>
+              </label>
+            </div>
+          </div>
+        ) : null}
         <h2 id="start-heading">How do you want to start this request?</h2>
         <div className="start-choice-grid">
           {choices.map((choice) => (

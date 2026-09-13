@@ -18,6 +18,7 @@ const userColumns = [
   'practice_phone',
   'practice_email',
   'practice_address',
+  'practice_state',
 ].join(', ');
 
 export async function loadPractitionerSettings(): Promise<PractitionerSettings> {
