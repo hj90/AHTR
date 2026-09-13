@@ -20,6 +20,7 @@ const getSupabaseClientMock = vi.mocked(getSupabaseClient);
 describe('practitioner settings store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
   });
 
   it('loads the demo user settings from Supabase', async () => {
@@ -57,6 +58,34 @@ describe('practitioner settings store', () => {
     await expect(loadPractitionerSettings()).resolves.toEqual(emptyPractitionerSettings);
   });
 
+  it('loads the state from this browser when the database migration is pending', async () => {
+    window.localStorage.setItem('ahtr-practice-state', 'VIC');
+    const currentMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: new Error('missing column') });
+    const legacyMaybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: demoUserId,
+        practitioner_name: 'Alex Clinician',
+        ahpra_number: '',
+        discipline: 'Physiotherapist',
+        provider_number: '',
+        practice_name: '',
+        practice_phone: '',
+        practice_email: '',
+        practice_address: '',
+      },
+      error: null,
+    });
+    const select = vi.fn()
+      .mockReturnValueOnce({ eq: () => ({ maybeSingle: currentMaybeSingle }) })
+      .mockReturnValueOnce({ eq: () => ({ maybeSingle: legacyMaybeSingle }) });
+    getSupabaseClientMock.mockReturnValue({ from: () => ({ select }) } as never);
+
+    await expect(loadPractitionerSettings()).resolves.toMatchObject({
+      practitionerName: 'Alex Clinician',
+      practiceState: 'VIC',
+    });
+  });
+
   it('upserts practitioner settings against the demo user', async () => {
     const single = vi.fn().mockResolvedValue({
       data: {
@@ -88,6 +117,41 @@ describe('practitioner settings store', () => {
         id: demoUserId,
         practitioner_name: 'Alex Clinician',
       }),
+      { onConflict: 'id' },
+    );
+  });
+
+  it('saves the state in this browser when the database migration is pending', async () => {
+    const currentSingle = vi.fn().mockResolvedValue({ data: null, error: new Error('missing column') });
+    const legacySingle = vi.fn().mockResolvedValue({
+      data: {
+        id: demoUserId,
+        practitioner_name: 'Alex Clinician',
+        ahpra_number: '',
+        discipline: '',
+        provider_number: '',
+        practice_name: '',
+        practice_phone: '',
+        practice_email: '',
+        practice_address: '',
+      },
+      error: null,
+    });
+    const upsert = vi.fn()
+      .mockReturnValueOnce({ select: () => ({ single: currentSingle }) })
+      .mockReturnValueOnce({ select: () => ({ single: legacySingle }) });
+    getSupabaseClientMock.mockReturnValue({ from: () => ({ upsert }) } as never);
+
+    const saved = await savePractitionerSettings({
+      ...emptyPractitionerSettings,
+      practitionerName: 'Alex Clinician',
+      practiceState: 'VIC',
+    });
+
+    expect(saved.practiceState).toBe('VIC');
+    expect(window.localStorage.getItem('ahtr-practice-state')).toBe('VIC');
+    expect(upsert).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ practice_state: expect.anything() }),
       { onConflict: 'id' },
     );
   });
