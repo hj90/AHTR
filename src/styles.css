@@ -955,6 +955,84 @@ dd {
   margin-top: 12px;
 }
 
+.start-choice-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.start-choice-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.start-step-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.start-step-status {
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.start-step-indicator {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 3px;
+}
+
+.start-step-indicator span {
+  width: 26px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.start-step-indicator .is-current {
+  background: var(--accent);
+}
+
+.intake-source-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.intake-source-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.intake-source-group + .intake-source-group {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.intake-source-group legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  color: var(--ink);
+  font-size: 0.96rem;
+  font-weight: 800;
+}
+
+.intake-source-group legend svg {
+  color: var(--accent-strong);
+}
+
+.intake-source-group > p {
+  margin-top: 5px;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .claim-type-section {
   margin-bottom: 20px;
   padding-bottom: 20px;
@@ -1001,6 +1079,11 @@ dd {
 .start-choice > span {
   display: grid;
   gap: 4px;
+}
+
+.start-choice > span svg {
+  margin-bottom: 1px;
+  color: var(--accent-strong);
 }
 
 .start-choice strong {
@@ -1076,9 +1159,102 @@ dd {
   background: #fbfcfc;
 }
 
+.intake-next-action {
+  margin-top: 18px;
+  padding-top: 0;
+}
+
+.intake-next-action p {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.intake-next-action > div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.start-method-step {
+  display: grid;
+  gap: 2px;
+}
+
 .cliniko-import-panel {
   display: grid;
   gap: 14px;
+}
+
+.cliniko-selection-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 13px;
+  padding: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.cliniko-selection-panel .draft-error {
+  margin: 0;
+  color: var(--safety);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.cliniko-selection-list {
+  display: grid;
+  gap: 7px;
+  max-height: 312px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.cliniko-selection-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.cliniko-selection-row:hover {
+  border-color: var(--hover-border);
+}
+
+.cliniko-selection-row.is-selected {
+  border-color: var(--accent-strong);
+  background: #f4faf8;
+  box-shadow: 0 0 0 1px var(--accent-strong);
+}
+
+.cliniko-selection-row input {
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
+.cliniko-selection-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.cliniko-selection-row strong {
+  font-size: 0.84rem;
+}
+
+.cliniko-selection-row small {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .cliniko-import-heading,
@@ -1155,6 +1331,10 @@ dd {
 }
 
 .cliniko-patient-button > span {
+  flex: 1 1 auto;
+}
+
+.cliniko-appointment-row > span {
   flex: 1 1 auto;
 }
 
@@ -1540,8 +1720,14 @@ dd {
   }
 
   .cliniko-import-heading > .ghost-action,
-  .cliniko-import-actions > .primary-action {
+  .cliniko-import-actions > .primary-action,
+  .start-panel-actions > .ghost-action,
+  .start-panel-actions > .primary-action {
     justify-content: center;
+    width: 100%;
+  }
+
+  .intake-next-action > div {
     width: 100%;
   }
 

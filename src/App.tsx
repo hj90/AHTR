@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
 import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import type { HomeStartContext } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import {
@@ -87,8 +88,8 @@ export default function App() {
     });
   }
 
-  function startForm() {
-    setValues(getNewFormValues(template, practitionerSettings));
+  function startForm(context: HomeStartContext) {
+    setValues(getStartValues(context));
     setErrors({});
     setGenerationError(null);
     setScreen('form');
@@ -96,10 +97,13 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
 
-  async function startFormFromNotes(notes: string) {
-    const baseValues = getNewFormValues(template, practitionerSettings);
-    const draft = await parseConsultNotes(notes, practitionerSettings, template);
-    setValues({ ...baseValues, ...draft.values });
+  async function startFormFromNotes(notes: string, context: HomeStartContext) {
+    const baseValues = getStartValues(context);
+    const profileForDraft = context.practitioner.source === 'settings'
+      ? practitionerSettings
+      : emptyPractitionerSettings;
+    const draft = await parseConsultNotes(notes, profileForDraft, template);
+    setValues(applyImportedDetails({ ...baseValues, ...draft.values }, context));
     setErrors({});
     setGenerationError(null);
     setScreen('form');
@@ -181,6 +185,16 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
 
+  function getStartValues(context: HomeStartContext) {
+    const baseValues = getNewFormValues(template, practitionerSettings);
+
+    if (context.practitioner.source !== 'settings') {
+      clearSavedPractitionerValues(baseValues);
+    }
+
+    return applyImportedDetails(baseValues, context);
+  }
+
   if (screen === 'home') {
     return (
       <AppShell
@@ -252,4 +266,57 @@ export default function App() {
       onClear={clearForm}
     />
   );
+}
+
+function applyImportedDetails(values: FormValues, context: HomeStartContext): FormValues {
+  const nextValues = { ...values };
+
+  if (context.patient.source === 'cliniko' && context.patient.selected) {
+    nextValues.personName = [
+      context.patient.selected.preferredFirstName || context.patient.selected.firstName,
+      context.patient.selected.lastName,
+    ].filter(Boolean).join(' ');
+    if (context.patient.selected.dateOfBirth) {
+      nextValues.dateOfBirth = context.patient.selected.dateOfBirth;
+    }
+  }
+
+  if (context.practitioner.source === 'cliniko' && context.practitioner.selected) {
+    nextValues.practitionerName = context.practitioner.selected.name;
+  }
+
+  return nextValues;
+}
+
+function clearSavedPractitionerValues(values: FormValues) {
+  const settingFieldIds = [
+    'discipline',
+    'practitionerName',
+    'ahpraNumber',
+    'siraApprovalNumber',
+    'practiceName',
+    'phoneNumber',
+    'practiceEmail',
+    'treatingPractitionerEmail',
+    'practiceAddress',
+    'qldProviderContactDetails',
+    'saFunctionalProviderName',
+    'vicDisciplinePhysiotherapy',
+    'vicDisciplineOsteopathy',
+    'vicDisciplineChiropractic',
+    'vicDisciplinePodiatry',
+    'vicDisciplineOccupationalTherapy',
+    'vicDisciplineExercisePhysiology',
+    'qldServicePhysiotherapy',
+    'qldServiceOsteopathy',
+    'qldServiceChiropractic',
+    'qldServicePodiatry',
+    'qldServiceOccupationalTherapy',
+    'qldServiceExercisePhysiology',
+    'qldServicePsychology',
+  ];
+
+  for (const fieldId of settingFieldIds) {
+    delete values[fieldId];
+  }
 }
