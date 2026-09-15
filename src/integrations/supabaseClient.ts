@@ -61,9 +61,9 @@ export function getSupabaseClient(): SupabaseClient | null {
   if (!cachedClient || cachedClientKey !== clientKey) {
     cachedClient = createClient(config.url, config.publishableKey, {
       auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
       },
     });
     cachedClientKey = clientKey;

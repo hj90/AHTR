@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Home, LogOut, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export type ShellPage = 'home' | 'settings';
@@ -9,11 +9,9 @@ interface AppShellProps {
   children: ReactNode;
   onNavigate: (page: ShellPage) => void;
   onToggle: () => void;
-  onSignOut: () => void;
-  userEmail: string;
 }
 
-export function AppShell({ activePage, collapsed, children, onNavigate, onToggle, onSignOut, userEmail }: AppShellProps) {
+export function AppShell({ activePage, collapsed, children, onNavigate, onToggle }: AppShellProps) {
   return (
     <div className={`app-shell${collapsed ? ' app-shell--collapsed' : ''}`}>
       <aside className="app-sidebar">
@@ -47,13 +45,7 @@ export function AppShell({ activePage, collapsed, children, onNavigate, onToggle
             <span>Settings</span>
           </button>
         </nav>
-        <div className="sidebar-account">
-          <span title={userEmail}>{userEmail}</span>
-          <button type="button" onClick={onSignOut}>
-            <LogOut aria-hidden="true" size={16} />
-            <span>Log out</span>
-          </button>
-        </div>
+        <p className="sidebar-note">Settings are kept on this device.</p>
       </aside>
       <div className="shell-content">{children}</div>
     </div>

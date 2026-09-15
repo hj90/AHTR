@@ -39,7 +39,7 @@ const disciplineOptions = [
 
 export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProps) {
   const [draft, setDraft] = useState(settings);
-  const [saveMessage, setSaveMessage] = useState('Saved securely to your account.');
+  const [saveMessage, setSaveMessage] = useState('Stored in Supabase for the demo user.');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -66,7 +66,7 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           setIsSaving(true);
           setSaveError(null);
           onSave(draft)
-            .then(() => setSaveMessage('Details saved to your account.'))
+            .then(() => setSaveMessage('Details saved to Supabase.'))
             .catch((error) => {
               setSaveError(error instanceof Error ? error.message : 'Unable to save details.');
             })
@@ -140,18 +140,18 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
       </form>
 
       <section className="clear-settings-card">
-        <div><h2>Practitioner data</h2><p>Clear the reusable practitioner and clinic details saved to your account.</p></div>
+        <div><h2>Demo practitioner data</h2><p>Clear the reusable practitioner and clinic details saved in Supabase.</p></div>
         <button
           className="danger-action"
           type="button"
           disabled={isClearing}
           onClick={() => {
-            if (window.confirm('Clear all practitioner and clinic details saved to your account?')) {
+            if (window.confirm('Clear all saved practitioner and clinic details from Supabase?')) {
               setIsClearing(true);
               setSaveError(null);
               onClear()
                 .then(() => {
-                  setSaveMessage('Saved details cleared from your account.');
+                  setSaveMessage('Saved details cleared from Supabase.');
                 })
                 .catch((error) => {
                   setSaveError(error instanceof Error ? error.message : 'Unable to clear details.');
