@@ -19,10 +19,7 @@ export function CompleteScreen({
       <section className="complete-panel" aria-labelledby="complete-title">
         <p className="screen-label">PDF ready</p>
         <h1 id="complete-title">{template.name} was generated in this browser</h1>
-        <p>
-          Your completed PDF was generated locally. This application has not saved
-          the form information or the generated PDF.
-        </p>
+        <p>Your completed PDF is ready. Click the button below to download it.</p>
         <div className="completion-actions">
           <a className="primary-action" href={generatedPdfUrl} download={downloadName}>
             <Download aria-hidden="true" size={18} />
