@@ -60,8 +60,9 @@ export function SignupScreen({
 
     setIsSubmitting(true);
     try {
+      const trimmedEmail = email.trim();
       await onSubmit({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
         practiceState,
       });

@@ -134,7 +134,23 @@ function requireSupabaseClient() {
   return supabase;
 }
 
-function practitionerSettingsError(operation: string, error: { message?: string }) {
+function practitionerSettingsError(operation: string, error: { code?: string; message?: string }) {
+  if (isPractitionerEmailConflict(error)) {
+    return new Error('Another practitioner is already using this email address.');
+  }
+
   const detail = error.message ? ` ${error.message}` : '';
   return new Error(`Unable to save practitioner settings to Supabase (${operation}).${detail}`);
+}
+
+function isPractitionerEmailConflict(error: { code?: string; message?: string }) {
+  const message = error.message?.toLowerCase() ?? '';
+
+  return (
+    error.code === '23505' &&
+    (
+      message.includes('practitioners_email_unique_idx') ||
+      message.includes('practitioners_email')
+    )
+  );
 }

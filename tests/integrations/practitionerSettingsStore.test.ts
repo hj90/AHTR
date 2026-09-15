@@ -201,6 +201,50 @@ describe('practitioner settings store', () => {
     );
   });
 
+  it('shows a clear error when the practitioner email is already used', async () => {
+    const signedInUserId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const existingClinicId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const clinicUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const clinicUpdate = vi.fn(() => ({ eq: clinicUpdateEq }));
+    const practitionerSingle = vi.fn().mockResolvedValue({
+      data: null,
+      error: {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint "practitioners_email_unique_idx"',
+      },
+    });
+    const existingPractitionerMaybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: signedInUserId,
+        clinic_id: existingClinicId,
+        name: '',
+        ahpra_number: '',
+        discipline: '',
+        sira_approval_number: '',
+        email: '',
+        preferred_contact_time: '',
+        signature: '',
+      },
+      error: null,
+    });
+    const existingPractitionerEq = vi.fn(() => ({ maybeSingle: existingPractitionerMaybeSingle }));
+    const practitionerSelect = vi.fn(() => ({ eq: existingPractitionerEq }));
+    const practitionerUpsert = vi.fn(() => ({ select: () => ({ single: practitionerSingle }) }));
+    const from = vi.fn((table: string) => {
+      if (table === 'clinics') return { update: clinicUpdate };
+      return { select: practitionerSelect, upsert: practitionerUpsert };
+    });
+    getSupabaseClientMock.mockReturnValue({ from } as never);
+
+    await expect(savePractitionerSettings(
+      {
+        ...emptyPractitionerSettings,
+        practitionerEmail: 'alex@example.test',
+      },
+      signedInUserId,
+    )).rejects.toThrow('Another practitioner is already using this email address.');
+  });
+
   it('deletes the demo practitioner settings row', async () => {
     const eq = vi.fn().mockResolvedValue({ error: null });
     const deleteRow = vi.fn(() => ({ eq }));

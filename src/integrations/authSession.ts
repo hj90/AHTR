@@ -58,7 +58,15 @@ export async function signUpWithEmailPassword({
   });
 
   if (error) {
+    if (isExistingAccountError(error)) {
+      throw new Error(existingAccountMessage);
+    }
+
     throw new Error(error.message);
+  }
+
+  if (hasNoNewIdentity(data.user)) {
+    throw new Error(existingAccountMessage);
   }
 
   const session = toAppAuthSession(data.session);
@@ -113,4 +121,21 @@ function toAppAuthSession(session: Session | null): AppAuthSession | null {
     userId: session.user.id,
     email: session.user.email ?? '',
   };
+}
+
+const existingAccountMessage = 'An account already exists for this email. Log in instead.';
+
+function isExistingAccountError(error: { code?: string; message?: string }) {
+  const message = error.message?.toLowerCase() ?? '';
+
+  return (
+    error.code === 'user_already_exists' ||
+    error.code === 'email_exists' ||
+    message.includes('already registered') ||
+    message.includes('already exists')
+  );
+}
+
+function hasNoNewIdentity(user: { identities?: unknown[] | null } | null) {
+  return Array.isArray(user?.identities) && user.identities.length === 0;
 }
