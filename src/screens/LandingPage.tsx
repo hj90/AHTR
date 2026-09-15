@@ -13,7 +13,7 @@ const sources = [
   ['Blank form', "Guided fields only, when there's no note to work from."],
 ];
 const trust = [
-  ['Nothing invented', "If a field isn't in your note, it stays empty for you to answer. No filled-in guesses on a clinical document."],
+  ['Only what’s in your notes', "If a field isn't in your note, it stays empty for you to answer. No filled-in guesses on a clinical document."],
   ['Cliniko is read-only', 'Cliniko is read-only — AHTR Assist never writes back into your practice management software.'],
   ['Kept to the request', 'Notes are used to fill the form in front of you, not to train anything or build a patient database.'],
 ];
