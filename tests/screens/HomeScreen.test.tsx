@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HomeScreen } from '../../src/screens/HomeScreen';
+import type { FormSubmission } from '../../src/integrations/formSubmissionStore';
 
 describe('HomeScreen Cliniko import', () => {
   afterEach(() => {
@@ -180,5 +181,76 @@ describe('HomeScreen state-specific form selection', () => {
     render(<HomeScreen practiceState="SA" onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
 
     expect(screen.getByText(/ReturnToWorkSA physiotherapy management plan/i)).toBeInTheDocument();
+  });
+});
+
+describe('HomeScreen saved requests', () => {
+  it('shows drafts and submitted requests and opens the selected request', () => {
+    const onOpenSubmission = vi.fn();
+    const submissions: FormSubmission[] = [
+      {
+        id: 'draft-1',
+        templateId: 'sira-allied-health-treatment-request',
+        practiceState: 'NSW' as const,
+        status: 'draft' as const,
+        values: { personName: 'Jordan Example', claimNumber: 'NSW-1' },
+        createdAt: '2026-09-15T00:00:00Z',
+        updatedAt: '2026-09-15T01:00:00Z',
+        submittedAt: null,
+      },
+      {
+        id: 'submitted-1',
+        templateId: 'worksafe-victoria-allied-health-recovery-management-plan',
+        practiceState: 'VIC' as const,
+        status: 'submitted' as const,
+        values: { personName: 'Alex Morgan' },
+        createdAt: '2026-09-14T00:00:00Z',
+        updatedAt: '2026-09-14T01:00:00Z',
+        submittedAt: '2026-09-14T01:00:00Z',
+      },
+    ];
+
+    render(
+      <HomeScreen
+        practiceState="NSW"
+        onStartBlank={vi.fn()}
+        onStartFromNotes={vi.fn()}
+        submissions={submissions}
+        onOpenSubmission={onOpenSubmission}
+      />,
+    );
+
+    expect(screen.getByText('Draft')).toBeInTheDocument();
+    expect(screen.getByText('Submitted')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Jordan Example').closest('button')!);
+    expect(onOpenSubmission).toHaveBeenCalledWith(submissions[0]);
+  });
+
+  it('requires confirmation before deleting a request', async () => {
+    const onDeleteSubmission = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const submission = {
+      id: 'draft-1',
+      templateId: 'sira-allied-health-treatment-request',
+      practiceState: 'NSW' as const,
+      status: 'draft' as const,
+      values: { personName: 'Jordan Example' },
+      createdAt: '2026-09-15T00:00:00Z',
+      updatedAt: '2026-09-15T01:00:00Z',
+      submittedAt: null,
+    };
+
+    render(
+      <HomeScreen
+        practiceState="NSW"
+        onStartBlank={vi.fn()}
+        onStartFromNotes={vi.fn()}
+        submissions={[submission]}
+        onDeleteSubmission={onDeleteSubmission}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Delete request for Jordan Example/i }));
+    await waitFor(() => expect(onDeleteSubmission).toHaveBeenCalledWith('draft-1'));
   });
 });

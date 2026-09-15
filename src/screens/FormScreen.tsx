@@ -9,6 +9,7 @@ interface FormScreenProps {
   template: PdfTemplateDefinition;
   values: FormValues;
   errors: ValidationErrors;
+  saveError?: string | null;
   activeSectionId: string | null;
   onChange: (fieldId: string, value: FieldValue) => void;
   onSectionChange: (sectionId: string) => void;
@@ -21,6 +22,7 @@ export function FormScreen({
   template,
   values,
   errors,
+  saveError = null,
   activeSectionId,
   onChange,
   onSectionChange,
@@ -73,6 +75,8 @@ export function FormScreen({
           <span>Fix the highlighted fields before review.</span>
         </div>
       ) : null}
+
+      {saveError ? <div className="error-summary" role="alert"><strong>Draft not saved.</strong><span>{saveError}</span></div> : null}
 
       <div className="workbench">
         <SectionRail

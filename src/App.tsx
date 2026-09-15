@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getFormForPracticeState } from './forms/formRegistry';
+import { getFormById, getFormForPracticeState } from './forms/formRegistry';
 import type { FieldValue, FormValues } from './forms/formTypes';
 import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
@@ -23,6 +23,14 @@ import {
 } from './utils/practitionerSettings';
 import type { PractitionerSettings } from './utils/practitionerSettings';
 import { parseConsultNotes } from './utils/noteParser';
+import {
+  createFormSubmission,
+  deleteFormSubmission,
+  listFormSubmissions,
+  markFormSubmissionSubmitted,
+  updateFormSubmission,
+  type FormSubmission,
+} from './integrations/formSubmissionStore';
 
 type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
@@ -41,6 +49,9 @@ export default function App() {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
+  const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
+  const [persistenceError, setPersistenceError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.localStorage.getItem('ahtr-sidebar-collapsed') === 'true',
   );
@@ -74,6 +85,27 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    void refreshSubmissions();
+  }, []);
+
+  useEffect(() => {
+    if (screen !== 'form' || !currentSubmissionId) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void updateFormSubmission(currentSubmissionId, values)
+        .then((saved) => {
+          replaceSubmission(saved);
+          setPersistenceError(null);
+        })
+        .catch((error: unknown) => {
+          setPersistenceError(error instanceof Error ? error.message : 'Unable to autosave this draft.');
+        });
+    }, 800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentSubmissionId, screen, values]);
+
   function updateField(fieldId: string, value: FieldValue) {
     setValues((currentValues) => withCalculatedServiceTotals(currentValues, fieldId, value));
     setErrors((currentErrors) => {
@@ -87,13 +119,15 @@ export default function App() {
     });
   }
 
-  function startForm() {
-    setValues(getNewFormValues(template, practitionerSettings));
+  async function startForm() {
+    const initialValues = getNewFormValues(template, practitionerSettings);
+    setValues(initialValues);
     setErrors({});
     setGenerationError(null);
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
     window.scrollTo({ top: 0 });
+    await createDraft(template, practitionerSettings.practiceState, initialValues);
   }
 
   async function startFormFromNotes(notes: string) {
@@ -105,6 +139,7 @@ export default function App() {
     setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
     window.scrollTo({ top: 0 });
+    await createDraft(template, practitionerSettings.practiceState, { ...baseValues, ...draft.values });
   }
 
   async function saveSettings(nextSettings: PractitionerSettings) {
@@ -161,6 +196,15 @@ export default function App() {
       const pdfBytes = await generateCompletedPdf(template, values);
       clearGeneratedPdfUrl(generatedPdfUrl);
       setGeneratedPdfUrl(createPdfObjectUrl(pdfBytes));
+      if (currentSubmissionId) {
+        try {
+          const saved = await markFormSubmissionSubmitted(currentSubmissionId, values);
+          replaceSubmission(saved);
+          setPersistenceError(null);
+        } catch (error) {
+          setPersistenceError(error instanceof Error ? error.message : 'The submitted status could not be saved.');
+        }
+      }
       setScreen('complete');
       window.scrollTo({ top: 0 });
     } catch {
@@ -177,6 +221,7 @@ export default function App() {
     setErrors({});
     setGenerationError(null);
     setActiveSectionId(template.sections[0]?.id ?? null);
+    setCurrentSubmissionId(null);
     setScreen('form');
     window.scrollTo({ top: 0 });
   }
@@ -193,6 +238,10 @@ export default function App() {
           practiceState={practitionerSettings.practiceState}
           onStartBlank={startForm}
           onStartFromNotes={startFormFromNotes}
+          submissions={submissions}
+          persistenceError={persistenceError}
+          onOpenSubmission={openSubmission}
+          onDeleteSubmission={removeSubmission}
         />
       </AppShell>
     );
@@ -244,6 +293,7 @@ export default function App() {
       template={template}
       values={values}
       errors={errors}
+      saveError={persistenceError}
       activeSectionId={activeSectionId}
       onChange={updateField}
       onSectionChange={changeSection}
@@ -252,4 +302,56 @@ export default function App() {
       onClear={clearForm}
     />
   );
+
+  async function refreshSubmissions() {
+    try {
+      setSubmissions(await listFormSubmissions());
+      setPersistenceError(null);
+    } catch (error) {
+      setPersistenceError(error instanceof Error ? error.message : 'Unable to load saved requests.');
+    }
+  }
+
+  async function createDraft(
+    selectedTemplate: typeof template,
+    practiceState: PractitionerSettings['practiceState'],
+    initialValues: FormValues,
+  ) {
+    try {
+      const saved = await createFormSubmission(selectedTemplate, practiceState, initialValues);
+      setCurrentSubmissionId(saved.id);
+      setSubmissions((current) => [saved, ...current]);
+      setPersistenceError(null);
+    } catch (error) {
+      setCurrentSubmissionId(null);
+      setPersistenceError(error instanceof Error ? error.message : 'Unable to save this draft.');
+    }
+  }
+
+  function openSubmission(submission: FormSubmission) {
+    const savedTemplate = getFormById(submission.templateId);
+    if (!savedTemplate) {
+      setPersistenceError('This saved request uses a form that is no longer available.');
+      return;
+    }
+
+    setPractitionerSettings((current) => ({ ...current, practiceState: submission.practiceState }));
+    setValues({ ...getInitialFormValues(savedTemplate), ...submission.values });
+    setCurrentSubmissionId(submission.id);
+    setErrors({});
+    setGenerationError(null);
+    setActiveSectionId(savedTemplate.sections[0]?.id ?? null);
+    setScreen('form');
+    window.scrollTo({ top: 0 });
+  }
+
+  async function removeSubmission(submissionId: string) {
+    await deleteFormSubmission(submissionId);
+    setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
+    if (currentSubmissionId === submissionId) setCurrentSubmissionId(null);
+  }
+
+  function replaceSubmission(saved: FormSubmission) {
+    setSubmissions((current) => current.map((submission) => submission.id === saved.id ? saved : submission));
+  }
 }

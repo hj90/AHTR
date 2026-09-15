@@ -2,52 +2,13 @@ import { writeFile } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { AHTR_SYSTEM_PROMPT, extractOutputText, responseSchema } from '../api/parse-notes.mjs';
 import { loadLocalEnv } from './lib/local-env.mjs';
+import { noteParserCases } from './fixtures/note-parser-cases.mjs';
 
 const env = await loadLocalEnv();
 const models = (env.BENCHMARK_MODELS || 'gpt-4.1-mini,gpt-5.4-nano').split(',');
 const runs = Number(env.BENCHMARK_RUNS || 2);
 
-const cases = [
-  {
-    id: 'structured-shoulder',
-    note: 'Initial physiotherapy consultation 2026-09-05. Patient Jordan Example. DOB 1987-03-14. Claim TEST-12345. Injury 2026-08-18. Warehouse storeperson, 38 hours weekly. Right shoulder flexion 120 degrees and pain with resisted abduction. QuickDASH 43/100 today. Request six physiotherapy sessions weekly. Anticipated discharge 2026-10-17. Plan developed collaboratively.',
-    expected: { personName: 'Jordan Example', dateOfBirth: '1987-03-14', claimNumber: 'TEST-12345', injuryDate: '2026-08-18', preInjuryWorkHours: '38', som1Measure: 'QuickDASH', som1InitialScore: '43', additionalSessions: '6', anticipatedDischargeDate: '2026-10-17', collaborativelyDeveloped: 'yes' },
-    forbidden: ['riskScore', 'caseConferenceWith'],
-  },
-  {
-    id: 'missing-administration',
-    note: 'Physiotherapy review. Left ankle pain is now 3/10 when walking. Dorsiflexion remains limited. Continue strengthening and balance exercises. No patient name, claim number, birth date or injury date was supplied.',
-    expectedContains: { clinicalSigns: ['Left ankle', 'Dorsiflexion'], intervention: ['strengthening', 'balance'] },
-    forbidden: ['personName', 'claimNumber', 'dateOfBirth', 'injuryDate'],
-  },
-  {
-    id: 'negative-red-flags',
-    note: 'Patient Sam Fiction reports lumbar pain. They deny saddle anaesthesia, bladder or bowel change, fever, unexplained weight loss and progressive leg weakness. No outcome measure was completed.',
-    expected: { personName: 'Sam Fiction' },
-    expectedContains: { clinicalSigns: ['lumbar pain'] },
-    forbidden: ['som1Measure', 'som1InitialScore', 'riskScore'],
-  },
-  {
-    id: 'work-capacity-goals',
-    note: 'Pre-injury role was registered nurse, 32 hours per week. Currently working 16 hours per week on administrative duties with no patient transfers. Goal: return to 32 hours and safely complete patient transfers within eight weeks.',
-    expected: { preInjuryOccupation: 'registered nurse', preInjuryWorkHours: '32' },
-    expectedContains: { workCurrentCapacity: ['16 hours', 'no patient transfers'], workGoal: ['32 hours', 'patient transfers', 'eight weeks'] },
-    forbidden: ['personName', 'claimNumber', 'injuryDate'],
-  },
-  {
-    id: 'outcome-history',
-    note: 'Knee Injury and Osteoarthritis Outcome Score (KOOS) was 45/100 on 2026-07-01, 58/100 on 2026-08-01 and 66/100 on 2026-09-01. This indicates improving knee function.',
-    expected: { som1Measure: 'Knee Injury and Osteoarthritis Outcome Score (KOOS)', som1InitialDate: '2026-07-01', som1InitialScore: '45', som1PreviousDate: '2026-08-01', som1PreviousScore: '58', som1CurrentDate: '2026-09-01', som1CurrentScore: '66' },
-    expectedContains: { somInterpretation: ['improving'] },
-    forbidden: ['personName', 'claimNumber'],
-  },
-  {
-    id: 'ambiguity-review',
-    note: 'The practitioner discussed possibly arranging a case conference with the employer if progress stalls. No conference has been booked. Discharge may be around late October, but this is uncertain.',
-    expectedReview: ['anticipatedDischargeDate'],
-    forbidden: ['caseConferenceAssistance', 'caseConferenceWith'],
-  },
-];
+const cases = noteParserCases;
 
 function normalize(value) {
   return String(value ?? '').trim().toLowerCase();
@@ -75,10 +36,10 @@ function score(testCase, payload) {
     }
   }
 
-  for (const fieldId of testCase.forbidden || []) {
+  for (const fieldId of testCase.expectedAbsent || []) {
     checks += 1;
     if (!fields.has(fieldId)) correct += 1;
-    else failures.push(`${fieldId}: populated without support`);
+    else failures.push(`${fieldId}: populated without source support`);
   }
 
   for (const fieldId of testCase.expectedReview || []) {
@@ -91,13 +52,13 @@ function score(testCase, payload) {
 }
 
 async function runCase(model, testCase, run) {
-  const input = `<clinical_note>\n${testCase.note}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n{}\n</practice_profile>`;
+  const input = `<selected_form>\n${testCase.templateId}\n</selected_form>\n<form_fields>\n${JSON.stringify(testCase.formFields)}\n</form_fields>\n<clinical_note>\n${testCase.note}\n</clinical_note>\n<claim_record>\n{}\n</claim_record>\n<practice_profile>\n{}\n</practice_profile>`;
   const started = performance.now();
   const response = env.BENCHMARK_ENDPOINT
     ? await fetch(env.BENCHMARK_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clinicalNote: testCase.note, practiceProfile: {} }),
+        body: JSON.stringify({ clinicalNote: testCase.note, practiceProfile: {}, templateId: testCase.templateId, formFields: testCase.formFields }),
       })
     : await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',

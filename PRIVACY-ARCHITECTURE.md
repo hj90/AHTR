@@ -1,32 +1,36 @@
 # Privacy Architecture
 
-This document describes the technical data flow for the local v0. It is not a legal policy.
+This document describes the technical data flow for the current prototype. It is not a legal policy.
 
 ## Data That Enters The Application
 
-Clinicians type form answers into browser controls. The demo fields are synthetic placeholders until the real PDF template and mapping are supplied.
+Clinicians enter form answers directly or draft them from consultation notes. Consultation notes are sent to the drafting API and its configured AI provider for extraction. The original notes are not saved with the form submission.
 
-## Where Form Data Lives
+## Browser-Persisted Form Data
 
-- React state in browser memory for the active page session.
-- Temporary PDF bytes in browser memory during generation.
-- A temporary Blob/Object URL after generation so the clinician can download the PDF.
+- Structured form values are autosaved to browser local storage.
+- The selected form template, practice state, draft/submitted status and timestamps are stored with the structured values.
+- A successful PDF generation marks the saved request as submitted.
+- Practitioner settings remain in the existing `users` table.
 
-## Where Form Data Does Not Go
+Saved requests are available only in the same browser profile. Clearing the browser's site data permanently removes them, and they are not available on another device.
 
-- No application database.
-- No application API.
-- No server PDF processor.
-- No analytics or session replay service.
-- No AI provider.
-- No file-storage service.
-- No URL query parameters or fragments.
-- No localStorage, sessionStorage, IndexedDB, Cache Storage, cookies, or service-worker storage.
+## Data That Is Not Persisted
 
-## Clearing Data
+- Original consultation notes.
+- Generated PDF files.
+- Temporary PDF Blob/Object URLs.
+- Form values in URL query parameters or fragments.
 
-`Start a new form` clears form values and revokes the generated PDF Object URL. Refreshing or closing the page also clears entered values because they are not persisted by the app.
+## PDF Generation
 
-## Persistent Non-Patient Data
+PDFs are generated in browser memory from the saved structured values. The application does not upload the generated PDF to file storage.
 
-This local v0 does not configure an external identity provider. If the app is later protected by external access infrastructure, that provider may retain authentication-related records such as user identity and access events. Those records are separate from form content.
+## Deletion
+
+Users can permanently delete saved requests from the home screen.
+
+## Operational Requirements
+
+- Browser storage is intended for prototype and synthetic test data. It is not suitable for reliable cross-device storage or long-term retention of real patient records.
+- Moving submissions to Supabase later will require authenticated ownership, row-level security and an explicit retention policy.

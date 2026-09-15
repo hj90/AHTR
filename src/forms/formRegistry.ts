@@ -19,3 +19,7 @@ export function getFormForPracticeState(practiceState: 'NSW' | 'VIC' | 'QLD' | '
   if (practiceState === 'SA') return returnToWorkSouthAustraliaPhysiotherapyManagementPlan;
   return siraAlliedHealthTreatmentRequest;
 }
+
+export function getFormById(templateId: string) {
+  return formRegistry.find((template) => template.id === templateId);
+}

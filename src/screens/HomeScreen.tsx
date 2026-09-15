@@ -6,6 +6,7 @@ import {
   FilePlus2,
   Plug,
   RefreshCw,
+  Trash2,
   UserRound,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -15,6 +16,7 @@ import {
   listClinikoPatients,
 } from '../integrations/clinikoImport';
 import type { ClinikoAppointmentSummary, ClinikoPatient } from '../integrations/clinikoImport';
+import type { FormSubmission } from '../integrations/formSubmissionStore';
 
 type StartMethod = 'notes' | 'blank' | 'cliniko';
 
@@ -22,6 +24,10 @@ interface HomeScreenProps {
   practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA';
   onStartBlank: () => void;
   onStartFromNotes: (notes: string) => Promise<void>;
+  submissions?: FormSubmission[];
+  persistenceError?: string | null;
+  onOpenSubmission?: (submission: FormSubmission) => void;
+  onDeleteSubmission?: (submissionId: string) => Promise<void>;
 }
 
 const choices: Array<{ id: StartMethod; label: string; note: string }> = [
@@ -36,7 +42,15 @@ interface AppointmentListState {
   error: string | null;
 }
 
-export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: HomeScreenProps) {
+export function HomeScreen({
+  practiceState,
+  onStartBlank,
+  onStartFromNotes,
+  submissions = [],
+  persistenceError = null,
+  onOpenSubmission = () => undefined,
+  onDeleteSubmission = async () => undefined,
+}: HomeScreenProps) {
   const [victoriaClaimType, setVictoriaClaimType] = useState<'work' | 'transport'>('work');
   const [method, setMethod] = useState<StartMethod>('blank');
   const [notes, setNotes] = useState('');
@@ -50,6 +64,7 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(() => new Set());
   const [isImportingCliniko, setIsImportingCliniko] = useState(false);
   const [hasLoadedClinikoPatients, setHasLoadedClinikoPatients] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const selectedAppointmentCount = selectedAppointmentIds.size;
   const selectedAppointmentLabel = useMemo(
@@ -333,9 +348,46 @@ export function HomeScreen({ practiceState, onStartBlank, onStartFromNotes }: Ho
         ) : null}
       </section>
 
-      <section className="requests-empty" aria-labelledby="requests-heading">
+      <section className={submissions.length ? 'requests-section' : 'requests-empty'} aria-labelledby="requests-heading">
         <h2 id="requests-heading">Your requests</h2>
-        <div><FilePlus2 aria-hidden="true" size={24} /><h3>Your first request will show up here</h3><p>Saving, resuming and duplicating requests will be available in a future version.</p></div>
+        {persistenceError ? <p className="draft-error" role="alert">{persistenceError}</p> : null}
+        {deleteError ? <p className="draft-error" role="alert">{deleteError}</p> : null}
+        {submissions.length ? (
+          <div className="saved-request-list">
+            {submissions.map((submission) => (
+              <article className="saved-request-card" key={submission.id}>
+                <button className="saved-request-open" type="button" onClick={() => onOpenSubmission(submission)}>
+                  <span>
+                    <strong>{String(submission.values.personName || 'Unnamed patient')}</strong>
+                    <small>{submission.values.claimNumber ? `Claim ${submission.values.claimNumber}` : 'No claim number'}</small>
+                  </span>
+                  <span>
+                    <strong className={`request-status request-status--${submission.status}`}>{submission.status === 'submitted' ? 'Submitted' : 'Draft'}</strong>
+                    <small>{submission.practiceState} · Updated {formatDateTime(submission.updatedAt)}</small>
+                  </span>
+                </button>
+                <button
+                  className="saved-request-delete"
+                  type="button"
+                  aria-label={`Delete request for ${String(submission.values.personName || 'unnamed patient')}`}
+                  onClick={async () => {
+                    if (!window.confirm('Delete this saved request? This cannot be undone.')) return;
+                    setDeleteError(null);
+                    try {
+                      await onDeleteSubmission(submission.id);
+                    } catch (error) {
+                      setDeleteError(error instanceof Error ? error.message : 'Unable to delete this request.');
+                    }
+                  }}
+                >
+                  <Trash2 aria-hidden="true" size={17} />
+                </button>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div><FilePlus2 aria-hidden="true" size={24} /><h3>Your first request will show up here</h3><p>Drafts autosave here and remain available in this browser.</p></div>
+        )}
       </section>
     </main>
   );

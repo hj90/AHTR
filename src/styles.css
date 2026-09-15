@@ -1220,6 +1220,86 @@ dd {
   margin-top: 16px;
 }
 
+.requests-section {
+  margin-top: 28px;
+}
+
+.saved-request-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.saved-request-card {
+  align-items: stretch;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d9dee7);
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+}
+
+.saved-request-open {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  padding: 16px;
+  text-align: left;
+}
+
+.saved-request-open span {
+  display: grid;
+  gap: 4px;
+}
+
+.saved-request-open span:last-child {
+  text-align: right;
+}
+
+.saved-request-open small {
+  color: var(--muted, #667085);
+}
+
+.request-status {
+  text-transform: capitalize;
+}
+
+.request-status--draft {
+  color: #9a6700;
+}
+
+.request-status--submitted {
+  color: #157347;
+}
+
+.saved-request-delete {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border, #d9dee7);
+  color: #b42318;
+  cursor: pointer;
+  display: flex;
+  padding: 0 16px;
+}
+
+@media (max-width: 640px) {
+  .saved-request-open {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .saved-request-open span:last-child {
+    text-align: left;
+  }
+}
+
 .requests-empty > div {
   display: grid;
   justify-items: center;
