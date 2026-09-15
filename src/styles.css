@@ -51,9 +51,6 @@
 .marketing-hero h1 { margin:0 0 16px; font-size:clamp(36px,5.2vw,56px); line-height:1.04; letter-spacing:-.02em; font-weight:800; text-wrap:balance; }
 .marketing-lead { max-width:48ch; margin:0 0 22px; color:#52615d; font-size:16.5px; line-height:1.6; }
 .marketing-hero-actions { margin-bottom:22px; }
-.scheme-rows { display:grid; gap:12px; }
-.scheme-row-label { margin:0 0 6px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#52615d; }
-.scheme-row--muted .scheme-row-label { color:#8a9793; }
 .scheme-badges { display:flex; gap:7px; flex-wrap:wrap; }
 .scheme-badges span { padding:4px 9px; border:1px solid #c3d0d8; border-radius:5px; background:#e6edf1; color:#2f4a5a; font-size:11.5px; font-weight:650; }
 .scheme-badges--muted span { border-style:dashed; background:transparent; color:#7c8c88; font-weight:600; }

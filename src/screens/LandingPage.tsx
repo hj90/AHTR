@@ -35,16 +35,6 @@ export function LandingPage({ onEnterApp }: LandingPageProps) {
       <section className="marketing-hero">
         <div><p className="marketing-kicker">NSW workers compensation and CTP</p><h1>Stop writing treatment requests at 9pm.</h1><p className="marketing-lead">AHTR Assist reads your consult note and fills the SIRA treatment request. You check every answer, then download the form ready to sign. Most requests take about three minutes instead of twenty.</p>
           <div className="marketing-hero-actions"><a className="marketing-primary marketing-primary--large" href="#start">Start free trial</a><a className="marketing-secondary marketing-secondary--large" href="#how">See how it works</a></div>
-          <div className="scheme-rows">
-            <div className="scheme-row">
-              <p className="scheme-row-label">Forms supported</p>
-              <div className="scheme-badges" aria-label="Forms supported"><span>SIRA allied health treatment request (SIRA09191)</span></div>
-            </div>
-            <div className="scheme-row scheme-row--muted">
-              <p className="scheme-row-label">Coming next</p>
-              <div className="scheme-badges scheme-badges--muted" aria-label="Coming next">{['WorkSafe Victoria AHRMP','WorkCover Queensland PMP'].map(x=><span key={x}>{x}</span>)}</div>
-            </div>
-          </div>
         </div>
         <figure className="workflow-figure" aria-label="Consult note to completed PDF workflow">
           <div className="workflow-panel"><b><em>01</em>Your note</b><div className="note-lines">{[92,74,84,58,80,66].map((w,i)=><i key={w} className={i===1||i===3?'is-highlighted':''} style={{width:`${w}%`,animationDelay:`${i*.15+.1}s`}} />)}</div></div>

@@ -10,10 +10,9 @@ describe('LandingPage', () => {
     expect(onEnterApp).toHaveBeenCalledOnce();
   });
 
-  it('shows only shipped forms as supported, with upcoming forms called out separately', () => {
+  it('does not show the form availability labels in the hero', () => {
     render(<LandingPage onEnterApp={vi.fn()} />);
-    expect(screen.getByLabelText('Forms supported')).toHaveTextContent('SIRA allied health treatment request (SIRA09191)');
-    expect(screen.getByLabelText('Coming next')).toHaveTextContent('WorkSafe Victoria AHRMP');
-    expect(screen.getByLabelText('Coming next')).toHaveTextContent('WorkCover Queensland PMP');
+    expect(screen.queryByText('Forms supported')).not.toBeInTheDocument();
+    expect(screen.queryByText('Coming next')).not.toBeInTheDocument();
   });
 });
