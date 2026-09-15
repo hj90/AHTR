@@ -19,6 +19,7 @@ import type { ClinikoAppointmentSummary, ClinikoPatient } from '../integrations/
 import type { FormSubmission } from '../integrations/formSubmissionStore';
 
 type StartMethod = 'notes' | 'blank' | 'cliniko';
+type RequestTab = 'draft' | 'submitted';
 
 interface HomeScreenProps {
   practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA';
@@ -65,8 +66,12 @@ export function HomeScreen({
   const [isImportingCliniko, setIsImportingCliniko] = useState(false);
   const [hasLoadedClinikoPatients, setHasLoadedClinikoPatients] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [requestTab, setRequestTab] = useState<RequestTab>('draft');
 
   const selectedAppointmentCount = selectedAppointmentIds.size;
+  const draftSubmissions = submissions.filter((submission) => submission.status === 'draft');
+  const pastSubmissions = submissions.filter((submission) => submission.status === 'submitted');
+  const visibleSubmissions = requestTab === 'draft' ? draftSubmissions : pastSubmissions;
   const selectedAppointmentLabel = useMemo(
     () => `${selectedAppointmentCount} appointment${selectedAppointmentCount === 1 ? '' : 's'} selected`,
     [selectedAppointmentCount],
@@ -348,13 +353,33 @@ export function HomeScreen({
         ) : null}
       </section>
 
-      <section className={submissions.length ? 'requests-section' : 'requests-empty'} aria-labelledby="requests-heading">
+      <section className="requests-section" aria-labelledby="requests-heading">
         <h2 id="requests-heading">Your requests</h2>
         {persistenceError ? <p className="draft-error" role="alert">{persistenceError}</p> : null}
         {deleteError ? <p className="draft-error" role="alert">{deleteError}</p> : null}
-        {submissions.length ? (
+        <div className="request-tabs" role="tablist" aria-label="Saved requests">
+          <button
+            className={requestTab === 'draft' ? 'is-active' : ''}
+            type="button"
+            role="tab"
+            aria-selected={requestTab === 'draft'}
+            onClick={() => setRequestTab('draft')}
+          >
+            Drafts <span>{draftSubmissions.length}</span>
+          </button>
+          <button
+            className={requestTab === 'submitted' ? 'is-active' : ''}
+            type="button"
+            role="tab"
+            aria-selected={requestTab === 'submitted'}
+            onClick={() => setRequestTab('submitted')}
+          >
+            Past submissions <span>{pastSubmissions.length}</span>
+          </button>
+        </div>
+        {visibleSubmissions.length ? (
           <div className="saved-request-list">
-            {submissions.map((submission) => (
+            {visibleSubmissions.map((submission) => (
               <article className="saved-request-card" key={submission.id}>
                 <button className="saved-request-open" type="button" onClick={() => onOpenSubmission(submission)}>
                   <span>
@@ -386,7 +411,11 @@ export function HomeScreen({
             ))}
           </div>
         ) : (
-          <div><FilePlus2 aria-hidden="true" size={24} /><h3>Your first request will show up here</h3><p>Drafts autosave here and remain available in this browser.</p></div>
+          <div className="request-tab-empty" role="tabpanel">
+            <FilePlus2 aria-hidden="true" size={24} />
+            <h3>{requestTab === 'draft' ? 'No saved drafts' : 'No past submissions'}</h3>
+            <p>{requestTab === 'draft' ? 'New forms autosave here as you work.' : 'Completed forms will appear here after PDF generation.'}</p>
+          </div>
         )}
       </section>
     </main>

@@ -1224,6 +1224,71 @@ dd {
   margin-top: 28px;
 }
 
+.request-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.request-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px 13px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.request-tabs button.is-active {
+  border-bottom-color: var(--accent-strong);
+  color: var(--ink);
+}
+
+.request-tabs button span {
+  min-width: 22px;
+  border-radius: 999px;
+  background: #e8efed;
+  padding: 2px 7px;
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.request-tabs button.is-active span {
+  background: #dcece7;
+  color: var(--accent-strong);
+}
+
+.request-tab-empty {
+  display: grid;
+  justify-items: center;
+  margin-top: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 7px;
+  padding: 30px 20px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.request-tab-empty h3 {
+  margin-top: 10px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.request-tab-empty p {
+  margin-top: 5px;
+  font-size: 0.78rem;
+}
+
 .saved-request-list {
   display: grid;
   gap: 10px;

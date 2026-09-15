@@ -185,7 +185,7 @@ describe('HomeScreen state-specific form selection', () => {
 });
 
 describe('HomeScreen saved requests', () => {
-  it('shows drafts and submitted requests and opens the selected request', () => {
+  it('separates drafts and submitted requests into tabs and opens the selected request', () => {
     const onOpenSubmission = vi.fn();
     const submissions: FormSubmission[] = [
       {
@@ -221,9 +221,22 @@ describe('HomeScreen saved requests', () => {
     );
 
     expect(screen.getByText('Draft')).toBeInTheDocument();
-    expect(screen.getByText('Submitted')).toBeInTheDocument();
+    expect(screen.queryByText('Submitted')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Jordan Example').closest('button')!);
     expect(onOpenSubmission).toHaveBeenCalledWith(submissions[0]);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Past submissions 1/i }));
+    expect(screen.getByText('Submitted')).toBeInTheDocument();
+    expect(screen.queryByText('Draft')).not.toBeInTheDocument();
+    expect(screen.getByText('Alex Morgan')).toBeInTheDocument();
+  });
+
+  it('shows a separate empty state for each request tab', () => {
+    render(<HomeScreen practiceState="NSW" onStartBlank={vi.fn()} onStartFromNotes={vi.fn()} />);
+
+    expect(screen.getByText('No saved drafts')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Past submissions 0/i }));
+    expect(screen.getByText('No past submissions')).toBeInTheDocument();
   });
 
   it('requires confirmation before deleting a request', async () => {
