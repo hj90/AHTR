@@ -7,6 +7,7 @@ import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { LandingPage } from './screens/LandingPage';
 import {
   clearPractitionerSettings,
   loadPractitionerSettings,
@@ -35,6 +36,7 @@ import {
 type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
 export default function App() {
+  const [showLandingPage, setShowLandingPage] = useState(() => window.location.hash !== '#app');
   const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
     emptyPractitionerSettings,
   );
@@ -61,6 +63,12 @@ export default function App() {
   useEffect(() => {
     return () => clearGeneratedPdfUrl(generatedPdfUrl);
   }, [generatedPdfUrl]);
+
+  useEffect(() => {
+    const syncPageFromUrl = () => setShowLandingPage(window.location.hash !== '#app');
+    window.addEventListener('hashchange', syncPageFromUrl);
+    return () => window.removeEventListener('hashchange', syncPageFromUrl);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +113,14 @@ export default function App() {
 
     return () => window.clearTimeout(timeoutId);
   }, [currentSubmissionId, screen, values]);
+
+  if (showLandingPage) {
+    return <LandingPage onEnterApp={() => {
+      window.location.hash = 'app';
+      setShowLandingPage(false);
+      window.scrollTo({ top: 0 });
+    }} />;
+  }
 
   function updateField(fieldId: string, value: FieldValue) {
     setValues((currentValues) => withCalculatedServiceTotals(currentValues, fieldId, value));
