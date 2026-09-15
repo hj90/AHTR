@@ -2,6 +2,7 @@ import type { FormValues, PdfTemplateDefinition } from '../forms/formTypes';
 import { getInitialFormValues } from './formState';
 
 export const demoUserId = '11111111-1111-4111-8111-111111111111';
+export const demoClinicId = '22222222-2222-4222-8222-222222222222';
 
 export interface PractitionerSettings {
   practiceState: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA';
@@ -9,23 +10,39 @@ export interface PractitionerSettings {
   ahpraNumber: string;
   discipline: string;
   providerNumber: string;
+  practitionerEmail: string;
+  preferredContactTime: string;
+  signature: string;
   practiceName: string;
   practicePhone: string;
   practiceEmail: string;
+  fax: string;
+  suburb: string;
+  postcode: string;
   practiceAddress: string;
 }
 
-export interface PractitionerSettingsRow {
+export interface ClinicSettingsRow {
   id: string;
-  practitioner_name: string;
+  practice_name: string;
+  practice_email: string;
+  practice_phone: string;
+  fax: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+}
+
+export interface PractitionerSettingsTableRow {
+  id: string;
+  clinic_id: string;
+  name: string;
   ahpra_number: string;
   discipline: string;
-  provider_number: string;
-  practice_name: string;
-  practice_phone: string;
-  practice_email: string;
-  practice_address: string;
-  practice_state: string;
+  sira_approval_number: string;
+  email: string;
+  preferred_contact_time: string;
+  signature: string;
 }
 
 export const emptyPractitionerSettings: PractitionerSettings = {
@@ -34,9 +51,15 @@ export const emptyPractitionerSettings: PractitionerSettings = {
   ahpraNumber: '',
   discipline: '',
   providerNumber: '',
+  practitionerEmail: '',
+  preferredContactTime: '',
+  signature: '',
   practiceName: '',
   practicePhone: '',
   practiceEmail: '',
+  fax: '',
+  suburb: '',
+  postcode: '',
   practiceAddress: '',
 };
 
@@ -44,6 +67,8 @@ export function getNewFormValues(
   template: PdfTemplateDefinition,
   settings: PractitionerSettings,
 ): FormValues {
+  const practiceAddress = settings.practiceAddress || formatClinicAddress(settings);
+  const practitionerEmail = settings.practitionerEmail || settings.practiceEmail;
   const values: FormValues = {
     ...getInitialFormValues(template),
     discipline: settings.discipline,
@@ -53,8 +78,14 @@ export function getNewFormValues(
     practiceName: settings.practiceName,
     phoneNumber: settings.practicePhone,
     practiceEmail: settings.practiceEmail,
-    treatingPractitionerEmail: settings.practiceEmail,
-    practiceAddress: settings.practiceAddress,
+    treatingPractitionerEmail: practitionerEmail,
+    bestContactTime: settings.preferredContactTime,
+    fax: settings.fax,
+    suburb: settings.suburb,
+    state: settings.practiceState,
+    postcode: settings.postcode,
+    practitionerSignature: settings.signature || settings.practitionerName,
+    practiceAddress,
   };
 
   if (template.id === 'worksafe-victoria-allied-health-recovery-management-plan') {
@@ -99,40 +130,83 @@ export function getNewFormValues(
   return values;
 }
 
-export function settingsToUserRow(
+export function settingsToClinicRow(
   settings: PractitionerSettings,
-  id = demoUserId,
-): PractitionerSettingsRow {
+  id = demoClinicId,
+): ClinicSettingsRow {
   return {
     id,
-    practitioner_name: settings.practitionerName,
-    ahpra_number: settings.ahpraNumber,
-    discipline: settings.discipline,
-    provider_number: settings.providerNumber,
     practice_name: settings.practiceName,
-    practice_phone: settings.practicePhone,
     practice_email: settings.practiceEmail,
-    practice_address: settings.practiceAddress,
-    practice_state: settings.practiceState,
+    practice_phone: settings.practicePhone,
+    fax: settings.fax,
+    suburb: settings.suburb,
+    state: settings.practiceState,
+    postcode: settings.postcode,
   };
 }
 
-export function userRowToSettings(row: Partial<PractitionerSettingsRow> | null): PractitionerSettings {
-  if (!row) {
+export function settingsToPractitionerRow(
+  settings: PractitionerSettings,
+  clinicId = demoClinicId,
+  id = demoUserId,
+): PractitionerSettingsTableRow {
+  return {
+    id,
+    clinic_id: clinicId,
+    name: settings.practitionerName,
+    ahpra_number: settings.ahpraNumber,
+    discipline: settings.discipline,
+    sira_approval_number: settings.providerNumber,
+    email: settings.practitionerEmail,
+    preferred_contact_time: settings.preferredContactTime,
+    signature: settings.signature,
+  };
+}
+
+export function clinicAndPractitionerRowsToSettings(
+  clinic: Partial<ClinicSettingsRow> | null,
+  practitioner: Partial<PractitionerSettingsTableRow> | null,
+): PractitionerSettings {
+  if (!clinic && !practitioner) {
     return emptyPractitionerSettings;
   }
 
+  const practiceState = normalizePracticeState(clinic?.state);
+  const suburb = clinic?.suburb ?? '';
+  const postcode = clinic?.postcode ?? '';
+
   return {
-    practitionerName: row.practitioner_name ?? '',
-    ahpraNumber: row.ahpra_number ?? '',
-    discipline: row.discipline ?? '',
-    providerNumber: row.provider_number ?? '',
-    practiceName: row.practice_name ?? '',
-    practicePhone: row.practice_phone ?? '',
-    practiceEmail: row.practice_email ?? '',
-    practiceAddress: row.practice_address ?? '',
-    practiceState: row.practice_state === 'VIC' || row.practice_state === 'QLD' || row.practice_state === 'WA' || row.practice_state === 'SA'
-      ? row.practice_state
-      : 'NSW',
+    practitionerName: practitioner?.name ?? '',
+    ahpraNumber: practitioner?.ahpra_number ?? '',
+    discipline: practitioner?.discipline ?? '',
+    providerNumber: practitioner?.sira_approval_number ?? '',
+    practitionerEmail: practitioner?.email ?? '',
+    preferredContactTime: practitioner?.preferred_contact_time ?? '',
+    signature: practitioner?.signature ?? '',
+    practiceName: clinic?.practice_name ?? '',
+    practicePhone: clinic?.practice_phone ?? '',
+    practiceEmail: clinic?.practice_email ?? '',
+    fax: clinic?.fax ?? '',
+    suburb,
+    postcode,
+    practiceAddress: formatAddressParts(suburb, practiceState, postcode),
+    practiceState,
   };
+}
+
+export function normalizePracticeState(value: string | undefined): PractitionerSettings['practiceState'] {
+  return value === 'VIC' || value === 'QLD' || value === 'WA' || value === 'SA' ? value : 'NSW';
+}
+
+function formatClinicAddress(settings: PractitionerSettings): string {
+  return formatAddressParts(settings.suburb, settings.practiceState, settings.postcode);
+}
+
+function formatAddressParts(
+  suburb: string,
+  state: PractitionerSettings['practiceState'],
+  postcode: string,
+): string {
+  return [suburb, state, postcode].filter(Boolean).join(' ');
 }

@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const defaultMigrationPath = 'supabase/migrations/202609080001_create_demo_users.sql';
+const defaultMigrationPath = 'supabase/migrations/202609150001_split_clinics_practitioners.sql';
 
 async function parseEnvFile(path) {
   if (!existsSync(path)) {

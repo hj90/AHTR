@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/signup", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/settings", "destination": "/index.html" },
+    { "source": "/form", "destination": "/index.html" },
+    { "source": "/review", "destination": "/index.html" },
+    { "source": "/complete", "destination": "/index.html" }
+  ]
+}

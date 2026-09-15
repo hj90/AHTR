@@ -98,6 +98,7 @@
 .marketing-cta form select option { color:#16211f; }
 .marketing-cta form button { margin-top:7px; }
 .pricing-note { margin:6px 0 0; color:#a8cfca; font-size:12.5px; }
+.marketing-form-error { margin:7px 0 0; color:#ffe2dd!important; font-size:12.5px; font-weight:700; }
 .marketing-footer { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:24px; padding-top:clamp(24px,3.6vw,42px); padding-bottom:clamp(24px,3.6vw,42px); border-top:1px solid #cfd8d4; }.marketing-footer>div{display:grid;align-content:start;gap:7px}.marketing-footer b{margin-bottom:3px;color:#52615d;font-size:11px;letter-spacing:.08em;text-transform:uppercase}.marketing-footer a,.marketing-footer button{justify-self:start;border:0;padding:0;background:none;font:inherit;color:inherit;cursor:pointer;font-size:13.5px}.marketing-footer div p{max-width:30ch;color:#52615d;font-size:13px;line-height:1.55}.marketing-footer>p{grid-column:1/-1;padding-top:16px;border-top:1px solid #cfd8d4;color:#52615d;font-size:12.5px}
 @keyframes ahtrRise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@keyframes ahtrFill{from{width:0}to{width:100%}}@keyframes ahtrLoop{0%,92%{opacity:1}97%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.marketing-page *{animation:none!important;opacity:1!important}}
@@ -857,6 +858,103 @@ dd {
   padding: 32px;
 }
 
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, #f6f8f7 0%, #eef3f1 100%);
+}
+
+.auth-panel {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.auth-panel--loading {
+  justify-items: start;
+}
+
+.auth-wordmark {
+  justify-self: start;
+  margin-right: 0;
+}
+
+.auth-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-copy h1 {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.auth-copy p:not(.marketing-kicker),
+.auth-switch {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.auth-form {
+  display: grid;
+  gap: 9px;
+}
+
+.auth-form label {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.auth-form .primary-action {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auth-error,
+.auth-message {
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.auth-error {
+  border: 1px solid #dda69a;
+  background: var(--safety-soft);
+  color: #6f2319;
+}
+
+.auth-message {
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.auth-switch {
+  text-align: center;
+}
+
+.auth-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  padding: 0;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .completion-actions {
   display: flex;
   flex-wrap: wrap;
@@ -958,6 +1056,41 @@ dd {
   line-height: 1.45;
 }
 
+.sidebar-account {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding: 0 8px;
+}
+
+.sidebar-account > span {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-account button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  padding: 7px 9px;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.sidebar-account button:hover {
+  border-color: #99aaa5;
+  background: #f8faf9;
+}
+
 .app-shell--collapsed .sidebar-brand {
   justify-content: center;
   padding-left: 0;
@@ -965,11 +1098,21 @@ dd {
 
 .app-shell--collapsed .sidebar-brand > span,
 .app-shell--collapsed .app-nav span,
+.app-shell--collapsed .sidebar-account > span,
+.app-shell--collapsed .sidebar-account button span,
 .app-shell--collapsed .sidebar-note {
   display: none;
 }
 
 .app-shell--collapsed .app-nav button {
+  justify-content: center;
+}
+
+.app-shell--collapsed .sidebar-account {
+  padding: 0;
+}
+
+.app-shell--collapsed .sidebar-account button {
   justify-content: center;
 }
 
@@ -1488,6 +1631,21 @@ dd {
   margin-top: 16px;
 }
 
+.settings-group {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e5ece9;
+}
+
+.settings-group:first-of-type {
+  margin-top: 12px;
+}
+
+.settings-group h3 {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
 .settings-field {
   display: grid;
   align-content: start;
@@ -1723,6 +1881,19 @@ dd {
 
   .sidebar-toggle,
   .sidebar-note {
+    display: none;
+  }
+
+  .sidebar-account {
+    margin-top: 0;
+    padding: 0;
+  }
+
+  .sidebar-account > span {
+    display: none;
+  }
+
+  .sidebar-account button span {
     display: none;
   }
 

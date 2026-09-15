@@ -5,11 +5,13 @@ import { workcoverQueenslandProviderManagementPlan } from '../../src/forms/templ
 import { workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan } from '../../src/forms/templates/workcoverWesternAustraliaPhysiotherapyTreatmentManagementPlan';
 import { returnToWorkSouthAustraliaPhysiotherapyManagementPlan } from '../../src/forms/templates/returnToWorkSouthAustraliaPhysiotherapyManagementPlan';
 import {
+  demoClinicId,
   demoUserId,
   emptyPractitionerSettings,
   getNewFormValues,
-  settingsToUserRow,
-  userRowToSettings,
+  settingsToClinicRow,
+  settingsToPractitionerRow,
+  type PractitionerSettings,
 } from '../../src/utils/practitionerSettings';
 
 describe('practitioner settings helpers', () => {
@@ -25,35 +27,47 @@ describe('practitioner settings helpers', () => {
     expect(values.practiceEmail).toBe('practice@example.test');
   });
 
-  it('maps settings to the demo users table row shape', () => {
-    const row = settingsToUserRow({
+  it('maps settings to the clinic and practitioner row shapes', () => {
+    const settings: PractitionerSettings = {
+      ...emptyPractitionerSettings,
       practitionerName: 'Alex Clinician',
       ahpraNumber: 'PHY0000000000',
       discipline: 'Physiotherapist',
       providerNumber: 'SIRA-123',
+      practitionerEmail: 'alex@example.test',
+      preferredContactTime: 'Weekday mornings',
+      signature: 'Alex Clinician',
       practiceName: 'Example Allied Health',
       practicePhone: '0290000000',
       practiceEmail: 'practice@example.test',
-      practiceAddress: '1 Example Street',
+      fax: '0290000001',
+      suburb: 'Richmond',
+      postcode: '3121',
       practiceState: 'VIC',
+    };
+
+    expect(settingsToClinicRow(settings)).toEqual({
+      id: demoClinicId,
+      practice_name: 'Example Allied Health',
+      practice_email: 'practice@example.test',
+      practice_phone: '0290000000',
+      fax: '0290000001',
+      suburb: 'Richmond',
+      state: 'VIC',
+      postcode: '3121',
     });
 
-    expect(row).toEqual({
+    expect(settingsToPractitionerRow(settings)).toEqual({
       id: demoUserId,
-      practitioner_name: 'Alex Clinician',
+      clinic_id: demoClinicId,
+      name: 'Alex Clinician',
       ahpra_number: 'PHY0000000000',
       discipline: 'Physiotherapist',
-      provider_number: 'SIRA-123',
-      practice_name: 'Example Allied Health',
-      practice_phone: '0290000000',
-      practice_email: 'practice@example.test',
-      practice_address: '1 Example Street',
-      practice_state: 'VIC',
+      sira_approval_number: 'SIRA-123',
+      email: 'alex@example.test',
+      preferred_contact_time: 'Weekday mornings',
+      signature: 'Alex Clinician',
     });
-  });
-
-  it('maps missing database rows to empty settings', () => {
-    expect(userRowToSettings(null)).toEqual(emptyPractitionerSettings);
   });
 
   it('prefills the WorkSafe Victoria form from practitioner settings', () => {

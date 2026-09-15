@@ -1,29 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getFormById, getFormForPracticeState } from './forms/formRegistry';
-import type { FieldValue, FormValues } from './forms/formTypes';
 import { AppShell } from './components/AppShell';
 import { CompleteScreen } from './screens/CompleteScreen';
 import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { LandingPage } from './screens/LandingPage';
+import { LoginScreen } from './screens/LoginScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
-import { LandingPage } from './screens/LandingPage';
+import { SignupScreen } from './screens/SignupScreen';
+import { getFormById, getFormForPracticeState } from './forms/formRegistry';
+import type { FieldValue, FormValues } from './forms/formTypes';
+import {
+  getCurrentAuthSession,
+  signInWithEmailPassword,
+  signOutAuthSession,
+  signUpWithEmailPassword,
+  subscribeToAuthSessionChange,
+  type AppAuthSession,
+} from './integrations/authSession';
 import {
   clearPractitionerSettings,
   loadPractitionerSettings,
   savePractitionerSettings,
 } from './integrations/practitionerSettingsStore';
-import { withCalculatedServiceTotals } from './utils/calculations';
-import { createGenericDownloadName, createPdfObjectUrl } from './utils/download';
-import { clearGeneratedPdfUrl, getInitialFormValues, resetFormState } from './utils/formState';
-import { hasErrors, validateTemplate } from './utils/validation';
-import type { ValidationErrors } from './utils/validation';
-import {
-  emptyPractitionerSettings,
-  getNewFormValues,
-} from './utils/practitionerSettings';
-import type { PractitionerSettings } from './utils/practitionerSettings';
-import { parseConsultNotes } from './utils/noteParser';
 import {
   createFormSubmission,
   deleteFormSubmission,
@@ -32,11 +31,32 @@ import {
   updateFormSubmission,
   type FormSubmission,
 } from './integrations/formSubmissionStore';
+import { withCalculatedServiceTotals } from './utils/calculations';
+import { createGenericDownloadName, createPdfObjectUrl } from './utils/download';
+import { clearGeneratedPdfUrl, getInitialFormValues, resetFormState } from './utils/formState';
+import { parseConsultNotes } from './utils/noteParser';
+import {
+  emptyPractitionerSettings,
+  getNewFormValues,
+} from './utils/practitionerSettings';
+import type { PractitionerSettings } from './utils/practitionerSettings';
+import { hasErrors, validateTemplate } from './utils/validation';
+import type { ValidationErrors } from './utils/validation';
 
-type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
+type AppRoute = 'landing' | 'signup' | 'login' | 'home' | 'settings' | 'form' | 'review' | 'complete';
+
+interface SignupDraft {
+  email: string;
+  practiceState: PractitionerSettings['practiceState'] | '';
+}
+
+const signupDraftStorageKey = 'ahtr-signup-draft';
 
 export default function App() {
-  const [showLandingPage, setShowLandingPage] = useState(() => window.location.hash !== '#app');
+  const [route, setRoute] = useState<AppRoute>(() => routeFromLocation());
+  const [authSession, setAuthSession] = useState<AppAuthSession | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [signupDraft, setSignupDraft] = useState<SignupDraft>(() => loadSignupDraft());
   const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
     emptyPractitionerSettings,
   );
@@ -44,7 +64,6 @@ export default function App() {
     () => getFormForPracticeState(practitionerSettings.practiceState),
     [practitionerSettings.practiceState],
   );
-  const [screen, setScreen] = useState<Screen>('home');
   const [values, setValues] = useState<FormValues>(() => getInitialFormValues(template));
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -65,17 +84,75 @@ export default function App() {
   }, [generatedPdfUrl]);
 
   useEffect(() => {
-    const syncPageFromUrl = () => setShowLandingPage(window.location.hash !== '#app');
-    window.addEventListener('hashchange', syncPageFromUrl);
-    return () => window.removeEventListener('hashchange', syncPageFromUrl);
+    const syncRouteFromHistory = () => setRoute(routeFromLocation());
+    window.addEventListener('popstate', syncRouteFromHistory);
+
+    if (window.location.pathname === '/' && window.location.hash === '#app') {
+      navigate('home', { replace: true });
+    }
+
+    return () => window.removeEventListener('popstate', syncRouteFromHistory);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
+    void getCurrentAuthSession()
+      .then((session) => {
+        if (!cancelled) {
+          setAuthSession(session);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAuthSession(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsAuthLoading(false);
+        }
+      });
+
+    const unsubscribe = subscribeToAuthSessionChange((session) => {
+      setAuthSession(session);
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!authSession && isProtectedRoute(route)) {
+      navigate('login', { replace: true });
+      return;
+    }
+
+    if (authSession && route === 'login') {
+      navigate('home', { replace: true });
+    }
+  }, [authSession, isAuthLoading, route]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!authSession) {
+      setPractitionerSettings(emptyPractitionerSettings);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const userId = authSession.userId;
+
     async function loadSettings() {
       try {
-        const storedSettings = await loadPractitionerSettings();
+        const storedSettings = await loadPractitionerSettings(userId);
         if (!cancelled) {
           setPractitionerSettings(storedSettings);
         }
@@ -91,14 +168,19 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authSession?.userId]);
 
   useEffect(() => {
+    if (!authSession) {
+      setSubmissions([]);
+      return;
+    }
+
     void refreshSubmissions();
-  }, []);
+  }, [authSession?.userId]);
 
   useEffect(() => {
-    if (screen !== 'form' || !currentSubmissionId) return;
+    if (route !== 'form' || !currentSubmissionId) return;
 
     const timeoutId = window.setTimeout(() => {
       void updateFormSubmission(currentSubmissionId, values)
@@ -112,15 +194,54 @@ export default function App() {
     }, 800);
 
     return () => window.clearTimeout(timeoutId);
-  }, [currentSubmissionId, screen, values]);
+  }, [currentSubmissionId, route, values]);
 
-  if (showLandingPage) {
-    return <LandingPage onEnterApp={() => {
-      window.location.hash = 'app';
-      setShowLandingPage(false);
-      window.scrollTo({ top: 0 });
-    }} />;
+  if (isAuthLoading && isProtectedRoute(route)) {
+    return <LoadingScreen />;
   }
+
+  if (route === 'landing') {
+    return (
+      <LandingPage
+        onLogin={() => navigate('login')}
+        onStartTrial={(details) => {
+          const nextDraft = {
+            email: details.email,
+            practiceState: details.practiceState,
+          };
+          saveSignupDraft(nextDraft);
+          setSignupDraft(nextDraft);
+          navigate('signup');
+        }}
+      />
+    );
+  }
+
+  if (route === 'signup') {
+    return (
+      <SignupScreen
+        initialEmail={signupDraft.email}
+        initialPracticeState={signupDraft.practiceState}
+        onLogin={() => navigate('login')}
+        onSubmit={createAccount}
+      />
+    );
+  }
+
+  if (route === 'login') {
+    return (
+      <LoginScreen
+        onCreateAccount={() => navigate('landing')}
+        onSubmit={logIn}
+      />
+    );
+  }
+
+  if (!authSession) {
+    return <LoadingScreen />;
+  }
+
+  const signedInUserId = authSession.userId;
 
   function updateField(fieldId: string, value: FieldValue) {
     setValues((currentValues) => withCalculatedServiceTotals(currentValues, fieldId, value));
@@ -140,9 +261,8 @@ export default function App() {
     setValues(initialValues);
     setErrors({});
     setGenerationError(null);
-    setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
-    window.scrollTo({ top: 0 });
+    navigate('form');
     await createDraft(template, practitionerSettings.practiceState, initialValues);
   }
 
@@ -152,19 +272,18 @@ export default function App() {
     setValues({ ...baseValues, ...draft.values });
     setErrors({});
     setGenerationError(null);
-    setScreen('form');
     setActiveSectionId(template.sections[0]?.id ?? null);
-    window.scrollTo({ top: 0 });
+    navigate('form');
     await createDraft(template, practitionerSettings.practiceState, { ...baseValues, ...draft.values });
   }
 
   async function saveSettings(nextSettings: PractitionerSettings) {
-    const storedSettings = await savePractitionerSettings(nextSettings);
+    const storedSettings = await savePractitionerSettings(nextSettings, signedInUserId);
     setPractitionerSettings(storedSettings);
   }
 
   async function clearSettings() {
-    await clearPractitionerSettings();
+    await clearPractitionerSettings(signedInUserId);
     setPractitionerSettings(emptyPractitionerSettings);
   }
 
@@ -174,6 +293,18 @@ export default function App() {
       window.localStorage.setItem('ahtr-sidebar-collapsed', String(next));
       return next;
     });
+  }
+
+  async function signOut() {
+    try {
+      await signOutAuthSession();
+    } finally {
+      setAuthSession(null);
+      setPractitionerSettings(emptyPractitionerSettings);
+      setCurrentSubmissionId(null);
+      setSubmissions([]);
+      navigate('login', { replace: true });
+    }
   }
 
   function reviewForm() {
@@ -189,13 +320,12 @@ export default function App() {
       return;
     }
 
-    setScreen('review');
-    window.scrollTo({ top: 0 });
+    navigate('review');
   }
 
   function editSection(sectionId: string) {
-    setScreen('form');
     changeSection(sectionId);
+    navigate('form');
   }
 
   function changeSection(sectionId: string) {
@@ -221,8 +351,7 @@ export default function App() {
           setPersistenceError(error instanceof Error ? error.message : 'The submitted status could not be saved.');
         }
       }
-      setScreen('complete');
-      window.scrollTo({ top: 0 });
+      navigate('complete');
     } catch {
       setGenerationError('Please check the form and try again.');
     } finally {
@@ -238,16 +367,17 @@ export default function App() {
     setGenerationError(null);
     setActiveSectionId(template.sections[0]?.id ?? null);
     setCurrentSubmissionId(null);
-    setScreen('form');
-    window.scrollTo({ top: 0 });
+    navigate('form');
   }
 
-  if (screen === 'home') {
+  if (route === 'home') {
     return (
       <AppShell
         activePage="home"
         collapsed={sidebarCollapsed}
-        onNavigate={setScreen}
+        userEmail={authSession.email}
+        onNavigate={navigate}
+        onSignOut={() => void signOut()}
         onToggle={toggleSidebar}
       >
         <HomeScreen
@@ -263,12 +393,14 @@ export default function App() {
     );
   }
 
-  if (screen === 'settings') {
+  if (route === 'settings') {
     return (
       <AppShell
         activePage="settings"
         collapsed={sidebarCollapsed}
-        onNavigate={setScreen}
+        userEmail={authSession.email}
+        onNavigate={navigate}
+        onSignOut={() => void signOut()}
         onToggle={toggleSidebar}
       >
         <SettingsScreen
@@ -280,7 +412,7 @@ export default function App() {
     );
   }
 
-  if (screen === 'review') {
+  if (route === 'review') {
     return (
       <ReviewScreen
         template={template}
@@ -293,7 +425,7 @@ export default function App() {
     );
   }
 
-  if (screen === 'complete' && generatedPdfUrl) {
+  if (route === 'complete' && generatedPdfUrl) {
     return (
       <CompleteScreen
         template={template}
@@ -313,11 +445,46 @@ export default function App() {
       activeSectionId={activeSectionId}
       onChange={updateField}
       onSectionChange={changeSection}
-      onBackHome={() => setScreen('home')}
+      onBackHome={() => navigate('home')}
       onReview={reviewForm}
       onClear={clearForm}
     />
   );
+
+  async function createAccount(details: {
+    email: string;
+    password: string;
+    practiceState: PractitionerSettings['practiceState'];
+  }) {
+    const result = await signUpWithEmailPassword(details);
+
+    if (!result.session) {
+      if (result.requiresEmailConfirmation) {
+        throw new Error('Check your email to confirm your account before logging in.');
+      }
+
+      throw new Error('Supabase did not return a session.');
+    }
+
+    setAuthSession(result.session);
+    const starterSettings = {
+      ...emptyPractitionerSettings,
+      practiceState: details.practiceState,
+      practitionerEmail: details.email,
+      practiceEmail: details.email,
+    };
+    const storedSettings = await savePractitionerSettings(starterSettings, result.session.userId);
+    setPractitionerSettings(storedSettings);
+    saveSignupDraft({ email: '', practiceState: '' });
+    setSignupDraft({ email: '', practiceState: '' });
+    navigate('settings', { replace: true });
+  }
+
+  async function logIn(email: string, password: string) {
+    const session = await signInWithEmailPassword(email, password);
+    setAuthSession(session);
+    navigate('home', { replace: true });
+  }
 
   async function refreshSubmissions() {
     try {
@@ -357,8 +524,7 @@ export default function App() {
     setErrors({});
     setGenerationError(null);
     setActiveSectionId(savedTemplate.sections[0]?.id ?? null);
-    setScreen('form');
-    window.scrollTo({ top: 0 });
+    navigate('form');
   }
 
   async function removeSubmission(submissionId: string) {
@@ -370,4 +536,100 @@ export default function App() {
   function replaceSubmission(saved: FormSubmission) {
     setSubmissions((current) => current.map((submission) => submission.id === saved.id ? saved : submission));
   }
+
+  function navigate(nextRoute: AppRoute, options: { replace?: boolean } = {}) {
+    const nextPath = pathForRoute(nextRoute);
+    if (window.location.pathname !== nextPath || window.location.hash) {
+      if (options.replace) {
+        window.history.replaceState({}, '', nextPath);
+      } else {
+        window.history.pushState({}, '', nextPath);
+      }
+    }
+    setRoute(nextRoute);
+    window.scrollTo({ top: 0 });
+  }
+}
+
+function LoadingScreen() {
+  return (
+    <main className="auth-page">
+      <section className="auth-panel auth-panel--loading">
+        <a className="marketing-wordmark auth-wordmark" href="/">AHTR <span>Assist</span></a>
+        <p>Loading your session...</p>
+      </section>
+    </main>
+  );
+}
+
+function routeFromLocation(): AppRoute {
+  if (window.location.pathname === '/' && window.location.hash === '#app') return 'home';
+
+  switch (window.location.pathname) {
+    case '/signup':
+      return 'signup';
+    case '/login':
+      return 'login';
+    case '/home':
+      return 'home';
+    case '/settings':
+      return 'settings';
+    case '/form':
+      return 'form';
+    case '/review':
+      return 'review';
+    case '/complete':
+      return 'complete';
+    default:
+      return 'landing';
+  }
+}
+
+function pathForRoute(route: AppRoute): string {
+  switch (route) {
+    case 'signup':
+      return '/signup';
+    case 'login':
+      return '/login';
+    case 'home':
+      return '/home';
+    case 'settings':
+      return '/settings';
+    case 'form':
+      return '/form';
+    case 'review':
+      return '/review';
+    case 'complete':
+      return '/complete';
+    case 'landing':
+    default:
+      return '/';
+  }
+}
+
+function isProtectedRoute(route: AppRoute) {
+  return route === 'home' || route === 'settings' || route === 'form' || route === 'review' || route === 'complete';
+}
+
+function loadSignupDraft(): SignupDraft {
+  try {
+    const raw = window.sessionStorage.getItem(signupDraftStorageKey);
+    if (!raw) return { email: '', practiceState: '' };
+
+    const parsed = JSON.parse(raw) as Partial<SignupDraft>;
+    return {
+      email: typeof parsed.email === 'string' ? parsed.email : '',
+      practiceState: isPracticeState(parsed.practiceState) ? parsed.practiceState : '',
+    };
+  } catch {
+    return { email: '', practiceState: '' };
+  }
+}
+
+function saveSignupDraft(draft: SignupDraft) {
+  window.sessionStorage.setItem(signupDraftStorageKey, JSON.stringify(draft));
+}
+
+function isPracticeState(value: unknown): value is PractitionerSettings['practiceState'] {
+  return value === 'NSW' || value === 'VIC' || value === 'QLD' || value === 'WA' || value === 'SA';
 }

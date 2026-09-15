@@ -36,7 +36,7 @@ npm run dev
 
 You can also put those values in `.env.local`. The app intentionally does not expose `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or any `sb_secret_...` value to the browser bundle.
 
-The demo stores reusable practitioner settings in `public.users` against a single hard-coded UUID:
+The demo stores reusable practitioner settings in `public.practitioners` and shared clinic settings in `public.clinics`. The practitioner primary key is the signed-in Supabase Auth user id. For the local/demo fixture, that id is:
 
 ```text
 11111111-1111-4111-8111-111111111111
@@ -49,6 +49,8 @@ npm run supabase:apply-demo-migration
 ```
 
 For `SUPABASE_DB_URL`, use the direct database connection string if your network supports IPv6. On IPv4-only networks, use the Supabase Shared Pooler / Supavisor session-mode connection string from the dashboard instead.
+
+The public landing page lives at `/`. Free-trial signup continues at `/signup`, returning users log in at `/login`, and signed-in users land in the application at `/home` with account settings at `/settings`. The included `vercel.json` rewrites those SPA routes back to `index.html` on Vercel.
 
 ## Build
 

@@ -14,15 +14,28 @@ const fields: Array<{
   type?: string;
   help?: string;
 }> = [
+  { key: 'practiceState', label: 'Clinic state', help: 'Sets which insurer form your requests use.' },
+  { key: 'practiceName', label: 'Practice name' },
+  { key: 'practiceEmail', label: 'Practice email', type: 'email' },
+  { key: 'practicePhone', label: 'Practice phone', type: 'tel' },
+  { key: 'fax', label: 'Fax', type: 'tel' },
+  { key: 'suburb', label: 'Suburb' },
+  { key: 'postcode', label: 'Postcode' },
+];
+
+const practitionerFields: Array<{
+  key: keyof PractitionerSettings;
+  label: string;
+  type?: string;
+  help?: string;
+}> = [
   { key: 'practitionerName', label: 'Your name', help: 'Use the name registered with AHPRA.' },
-  { key: 'practiceState', label: 'State you practise in', help: 'Sets which insurer form your requests use.' },
   { key: 'ahpraNumber', label: 'AHPRA registration number' },
   { key: 'discipline', label: 'Allied health discipline' },
-  { key: 'providerNumber', label: 'Provider or SIRA approval number' },
-  { key: 'practiceName', label: 'Practice name' },
-  { key: 'practicePhone', label: 'Practice phone', type: 'tel' },
-  { key: 'practiceEmail', label: 'Practice email', type: 'email' },
-  { key: 'practiceAddress', label: 'Practice address' },
+  { key: 'providerNumber', label: 'SIRA approval number' },
+  { key: 'practitionerEmail', label: 'Practitioner email', type: 'email' },
+  { key: 'preferredContactTime', label: 'Preferred contact time' },
+  { key: 'signature', label: 'Signature / typed name' },
 ];
 
 const disciplineOptions = [
@@ -77,57 +90,40 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           <h2>Practitioner and clinic details</h2>
           <p>These values prefill each new request and remain editable inside the form.</p>
         </div>
-        <div className="settings-grid">
-          {fields.map((field) => (
-            <label className="settings-field" key={field.key}>
-              <span>{field.label}</span>
-              {field.key === 'practiceState' ? (
-                <select
-                  value={draft.practiceState}
-                  onChange={(event) => {
-                    setSaveError(null);
-                    setSaveMessage('Unsaved changes.');
-                    setDraft((current) => ({
-                      ...current,
-                      practiceState: event.target.value === 'VIC' || event.target.value === 'QLD' || event.target.value === 'WA' || event.target.value === 'SA'
-                        ? event.target.value
-                        : 'NSW',
-                    }));
-                  }}
-                >
-                  <option value="NSW">New South Wales</option>
-                  <option value="VIC">Victoria</option>
-                  <option value="QLD">Queensland</option>
-                  <option value="WA">Western Australia</option>
-                  <option value="SA">South Australia</option>
-                </select>
-              ) : field.key === 'discipline' ? (
-                <select
-                  value={draft.discipline}
-                  onChange={(event) => {
-                    setSaveError(null);
-                    setSaveMessage('Unsaved changes.');
-                    setDraft((current) => ({ ...current, discipline: event.target.value }));
-                  }}
-                >
-                  {disciplineOptions.map((option) => (
-                    <option key={option} value={option}>{option || 'Select a discipline'}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={field.type ?? 'text'}
-                  value={draft[field.key]}
-                  onChange={(event) => {
-                    setSaveError(null);
-                    setSaveMessage('Unsaved changes.');
-                    setDraft((current) => ({ ...current, [field.key]: event.target.value }));
-                  }}
-                />
-              )}
-              {field.help ? <small>{field.help}</small> : null}
-            </label>
-          ))}
+        <div className="settings-group">
+          <h3>Clinic details</h3>
+          <div className="settings-grid">
+            {fields.map((field) => (
+              <SettingsField
+                draft={draft}
+                field={field}
+                key={field.key}
+                onChange={(key, value) => {
+                  setSaveError(null);
+                  setSaveMessage('Unsaved changes.');
+                  setDraft((current) => ({ ...current, [key]: value }));
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <h3>Practitioner details</h3>
+          <div className="settings-grid">
+            {practitionerFields.map((field) => (
+              <SettingsField
+                draft={draft}
+                field={field}
+                key={field.key}
+                onChange={(key, value) => {
+                  setSaveError(null);
+                  setSaveMessage('Unsaved changes.');
+                  setDraft((current) => ({ ...current, [key]: value }));
+                }}
+              />
+            ))}
+          </div>
         </div>
         <div className="settings-actions">
           <span className={saveError ? 'settings-error' : ''} aria-live="polite">
@@ -140,13 +136,13 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
       </form>
 
       <section className="clear-settings-card">
-        <div><h2>Demo practitioner data</h2><p>Clear the reusable practitioner and clinic details saved in Supabase.</p></div>
+        <div><h2>Demo practitioner data</h2><p>Clear the reusable practitioner details saved in Supabase for the demo user.</p></div>
         <button
           className="danger-action"
           type="button"
           disabled={isClearing}
           onClick={() => {
-            if (window.confirm('Clear all saved practitioner and clinic details from Supabase?')) {
+            if (window.confirm('Clear saved practitioner details from Supabase for the demo user?')) {
               setIsClearing(true);
               setSaveError(null);
               onClear()
@@ -162,5 +158,61 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
         ><Trash2 aria-hidden="true" size={16} /> {isClearing ? 'Clearing details' : 'Clear saved details'}</button>
       </section>
     </main>
+  );
+}
+
+function SettingsField({
+  draft,
+  field,
+  onChange,
+}: {
+  draft: PractitionerSettings;
+  field: {
+    key: keyof PractitionerSettings;
+    label: string;
+    type?: string;
+    help?: string;
+  };
+  onChange: (key: keyof PractitionerSettings, value: string) => void;
+}) {
+  return (
+    <label className="settings-field">
+      <span>{field.label}</span>
+      {field.key === 'practiceState' ? (
+        <select
+          value={draft.practiceState}
+          onChange={(event) => {
+            onChange(
+              field.key,
+              event.target.value === 'VIC' || event.target.value === 'QLD' || event.target.value === 'WA' || event.target.value === 'SA'
+                ? event.target.value
+                : 'NSW',
+            );
+          }}
+        >
+          <option value="NSW">New South Wales</option>
+          <option value="VIC">Victoria</option>
+          <option value="QLD">Queensland</option>
+          <option value="WA">Western Australia</option>
+          <option value="SA">South Australia</option>
+        </select>
+      ) : field.key === 'discipline' ? (
+        <select
+          value={draft.discipline}
+          onChange={(event) => onChange(field.key, event.target.value)}
+        >
+          {disciplineOptions.map((option) => (
+            <option key={option} value={option}>{option || 'Select a discipline'}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={field.type ?? 'text'}
+          value={draft[field.key]}
+          onChange={(event) => onChange(field.key, event.target.value)}
+        />
+      )}
+      {field.help ? <small>{field.help}</small> : null}
+    </label>
   );
 }

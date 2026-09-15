@@ -1,127 +1,122 @@
 import { getSupabaseClient } from './supabaseClient';
 import {
+  clinicAndPractitionerRowsToSettings,
   demoUserId,
   emptyPractitionerSettings,
-  settingsToUserRow,
-  userRowToSettings,
+  settingsToClinicRow,
+  settingsToPractitionerRow,
+  type ClinicSettingsRow,
   type PractitionerSettings,
-  type PractitionerSettingsRow,
+  type PractitionerSettingsTableRow,
 } from '../utils/practitionerSettings';
 
-const userColumns = [
+const clinicColumns = [
   'id',
-  'practitioner_name',
-  'ahpra_number',
-  'discipline',
-  'provider_number',
   'practice_name',
-  'practice_phone',
   'practice_email',
-  'practice_address',
-  'practice_state',
+  'practice_phone',
+  'fax',
+  'suburb',
+  'state',
+  'postcode',
 ].join(', ');
 
-const legacyUserColumns = [
+const practitionerColumns = [
   'id',
-  'practitioner_name',
+  'clinic_id',
+  'name',
   'ahpra_number',
   'discipline',
-  'provider_number',
-  'practice_name',
-  'practice_phone',
-  'practice_email',
-  'practice_address',
+  'sira_approval_number',
+  'email',
+  'preferred_contact_time',
+  'signature',
 ].join(', ');
 
-const practiceStateStorageKey = 'ahtr-practice-state';
-
-function loadLocalPracticeState(): PractitionerSettings['practiceState'] {
-  const storedState = window.localStorage.getItem(practiceStateStorageKey);
-  return storedState === 'VIC' || storedState === 'QLD' || storedState === 'WA' || storedState === 'SA' ? storedState : 'NSW';
-}
-
-function saveLocalPracticeState(state: PractitionerSettings['practiceState']) {
-  window.localStorage.setItem(practiceStateStorageKey, state);
-}
-
-export async function loadPractitionerSettings(): Promise<PractitionerSettings> {
+export async function loadPractitionerSettings(userId = demoUserId): Promise<PractitionerSettings> {
   const supabase = getSupabaseClient();
   if (!supabase) {
     return emptyPractitionerSettings;
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .select(userColumns)
-    .eq('id', demoUserId)
-    .maybeSingle<PractitionerSettingsRow>();
+  const practitionerResult = await supabase
+    .from('practitioners')
+    .select(practitionerColumns)
+    .eq('id', userId)
+    .maybeSingle<PractitionerSettingsTableRow>();
 
-  if (error) {
-    const legacyResult = await supabase
-      .from('users')
-      .select(legacyUserColumns)
-      .eq('id', demoUserId)
-      .maybeSingle<Omit<PractitionerSettingsRow, 'practice_state'>>();
-
-    if (legacyResult.error) {
-      throw new Error('Unable to load practitioner settings from Supabase.');
-    }
-
-    return {
-      ...userRowToSettings(legacyResult.data),
-      practiceState: loadLocalPracticeState(),
-    };
+  if (practitionerResult.error) {
+    throw new Error('Unable to load practitioner settings from Supabase.');
   }
 
-  const settings = userRowToSettings(data);
-  saveLocalPracticeState(settings.practiceState);
-  return settings;
+  if (!practitionerResult.data) {
+    return emptyPractitionerSettings;
+  }
+
+  const clinicResult = await supabase
+    .from('clinics')
+    .select(clinicColumns)
+    .eq('id', practitionerResult.data.clinic_id)
+    .maybeSingle<ClinicSettingsRow>();
+
+  if (clinicResult.error) {
+    throw new Error('Unable to load practitioner settings from Supabase.');
+  }
+
+  return clinicAndPractitionerRowsToSettings(clinicResult.data, practitionerResult.data);
 }
 
 export async function savePractitionerSettings(
   settings: PractitionerSettings,
+  userId = demoUserId,
 ): Promise<PractitionerSettings> {
   const supabase = requireSupabaseClient();
-  const row = settingsToUserRow(settings);
 
-  const { data, error } = await supabase
-    .from('users')
-    .upsert(row, { onConflict: 'id' })
-    .select(userColumns)
-    .single<PractitionerSettingsRow>();
+  const existingPractitionerResult = await supabase
+    .from('practitioners')
+    .select(practitionerColumns)
+    .eq('id', userId)
+    .maybeSingle<PractitionerSettingsTableRow>();
 
-  if (error) {
-    const { practice_state: _practiceState, ...legacyRow } = row;
-    const legacyResult = await supabase
-      .from('users')
-      .upsert(legacyRow, { onConflict: 'id' })
-      .select(legacyUserColumns)
-      .single<Omit<PractitionerSettingsRow, 'practice_state'>>();
-
-    if (legacyResult.error) {
-      throw new Error('Unable to save practitioner settings to Supabase.');
-    }
-
-    saveLocalPracticeState(settings.practiceState);
-    return {
-      ...userRowToSettings(legacyResult.data),
-      practiceState: settings.practiceState,
-    };
+  if (existingPractitionerResult.error) {
+    throw new Error('Unable to save practitioner settings to Supabase.');
   }
 
-  const storedSettings = userRowToSettings(data);
-  saveLocalPracticeState(storedSettings.practiceState);
-  return storedSettings;
+  const clinicId = existingPractitionerResult.data?.clinic_id ?? createUuid();
+
+  const clinicRow = settingsToClinicRow(settings, clinicId);
+  const clinicResult = await supabase
+    .from('clinics')
+    .upsert(clinicRow, { onConflict: 'id' });
+
+  if (clinicResult.error) {
+    throw new Error('Unable to save practitioner settings to Supabase.');
+  }
+
+  const practitionerResult = await supabase
+    .from('practitioners')
+    .upsert(settingsToPractitionerRow(settings, clinicRow.id, userId), { onConflict: 'id' })
+    .select(practitionerColumns)
+    .single<PractitionerSettingsTableRow>();
+
+  if (practitionerResult.error) {
+    throw new Error('Unable to save practitioner settings to Supabase.');
+  }
+
+  return clinicAndPractitionerRowsToSettings(clinicRow, practitionerResult.data);
 }
 
-export async function clearPractitionerSettings(): Promise<void> {
-  window.localStorage.removeItem(practiceStateStorageKey);
+export async function clearPractitionerSettings(userId = demoUserId): Promise<void> {
   const supabase = requireSupabaseClient();
-  const { error } = await supabase.from('users').delete().eq('id', demoUserId);
+  const { error } = await supabase.from('practitioners').delete().eq('id', userId);
 
   if (error) {
     throw new Error('Unable to clear practitioner settings from Supabase.');
   }
+}
+
+function createUuid() {
+  return crypto.randomUUID();
 }
 
 function requireSupabaseClient() {
