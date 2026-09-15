@@ -1,18 +1,5 @@
-import {
-  CheckCircle2,
-  Database,
-  Plug,
-  RefreshCw,
-  ShieldCheck,
-  Trash2,
-  TriangleAlert,
-} from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  checkSupabaseConnection,
-  getSupabaseConnectionStatus,
-  type SupabaseConnectionResult,
-} from '../integrations/supabaseClient';
 import type { PractitionerSettings } from '../utils/practitionerSettings';
 
 interface SettingsScreenProps {
@@ -56,10 +43,6 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseConnectionResult>(
-    getSupabaseConnectionStatus,
-  );
-  const [isCheckingSupabase, setIsCheckingSupabase] = useState(false);
 
   useEffect(() => {
     setDraft({
@@ -67,21 +50,6 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
       discipline: disciplineOptions.includes(settings.discipline) ? settings.discipline : '',
     });
   }, [settings]);
-  useEffect(() => {
-    if (supabaseStatus.state === 'configured') {
-      void refreshSupabaseStatus();
-    }
-  }, []);
-
-  async function refreshSupabaseStatus() {
-    setIsCheckingSupabase(true);
-    try {
-      setSupabaseStatus(await checkSupabaseConnection());
-    } finally {
-      setIsCheckingSupabase(false);
-    }
-  }
-
   return (
     <main className="settings-screen">
       <header className="compact-page-header">
@@ -170,45 +138,6 @@ export function SettingsScreen({ settings, onSave, onClear }: SettingsScreenProp
           </button>
         </div>
       </form>
-
-      <section className="settings-card settings-card--muted">
-        <div className="settings-card-heading">
-          <h2>Checks and integrations</h2>
-        </div>
-        <div className={`coming-soon-row integration-row integration-row--${supabaseStatus.state}`}>
-          {supabaseStatus.state === 'connected' ? (
-            <CheckCircle2 aria-hidden="true" size={20} />
-          ) : supabaseStatus.state === 'configured' ? (
-            <Database aria-hidden="true" size={20} />
-          ) : (
-            <TriangleAlert aria-hidden="true" size={20} />
-          )}
-          <div>
-            <h3>Supabase</h3>
-            <p>{supabaseStatus.detail}</p>
-          </div>
-          <button
-            className="text-action integration-check-action"
-            type="button"
-            onClick={refreshSupabaseStatus}
-            disabled={isCheckingSupabase || supabaseStatus.state === 'missing-config'}
-          >
-            <RefreshCw aria-hidden="true" size={15} />
-            {isCheckingSupabase ? 'Checking' : 'Check'}
-          </button>
-          <span>{isCheckingSupabase ? 'Checking' : supabaseStatus.label}</span>
-        </div>
-        <div className="coming-soon-row">
-          <ShieldCheck aria-hidden="true" size={20} />
-          <div><h3>Compliance checks</h3><p>Automatic checks for gaps insurers commonly query.</p></div>
-          <span>Coming soon</span>
-        </div>
-        <div className="coming-soon-row">
-          <Plug aria-hidden="true" size={20} />
-          <div><h3>Cliniko</h3><p>Import patient, claim and recent consultation details.</p></div>
-          <span>Coming soon</span>
-        </div>
-      </section>
 
       <section className="clear-settings-card">
         <div><h2>Demo practitioner data</h2><p>Clear the reusable practitioner and clinic details saved in Supabase.</p></div>
