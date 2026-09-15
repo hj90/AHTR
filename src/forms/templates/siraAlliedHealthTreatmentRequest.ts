@@ -119,7 +119,6 @@ function signature(id: string, label: string, page: number, x: number, y: number
     label,
     type: 'text',
     required,
-    helpText: 'Typed name only. This does not create a cryptographic digital signature.',
     pdf: { mode: 'overlay', page, x, y, size: 10, maxWidth: 250 },
   });
 }
