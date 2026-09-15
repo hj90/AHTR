@@ -15,4 +15,12 @@ describe('LandingPage', () => {
     expect(screen.queryByText('Forms supported')).not.toBeInTheDocument();
     expect(screen.queryByText('Coming next')).not.toBeInTheDocument();
   });
+
+  it('shows review-first PDF copy and realistic sample requests', () => {
+    render(<LandingPage onEnterApp={vi.fn()} />);
+    expect(screen.getByText(/Download the insurer’s official PDF/)).toBeInTheDocument();
+    expect(screen.getByText('A. Whitfield')).toBeInTheDocument();
+    expect(screen.getByText('WS-204418')).toBeInTheDocument();
+    expect(screen.queryByText('Sample Patient A')).not.toBeInTheDocument();
+  });
 });
