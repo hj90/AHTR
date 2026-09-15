@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { getFormById, getFormForPracticeState } from './forms/formRegistry';
 import type { FieldValue, FormValues } from './forms/formTypes';
 import { AppShell } from './components/AppShell';
@@ -7,6 +8,8 @@ import { FormScreen } from './screens/FormScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ReviewScreen } from './screens/ReviewScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { AuthScreen } from './screens/AuthScreen';
+import { getSupabaseClient } from './integrations/supabaseClient';
 import {
   clearPractitionerSettings,
   loadPractitionerSettings,
@@ -28,6 +31,7 @@ import {
   deleteFormSubmission,
   listFormSubmissions,
   markFormSubmissionSubmitted,
+  migrateLocalSubmissionsToAccount,
   updateFormSubmission,
   type FormSubmission,
 } from './integrations/formSubmissionStore';
@@ -35,6 +39,33 @@ import {
 type Screen = 'home' | 'settings' | 'form' | 'review' | 'complete';
 
 export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setIsLoadingSession(false);
+      return;
+    }
+
+    void supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setIsLoadingSession(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setIsLoadingSession(false);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  if (isLoadingSession) return <main className="auth-screen"><p>Loading AHTR Assist…</p></main>;
+  if (!session) return <AuthScreen />;
+  return <AuthenticatedApp session={session} />;
+}
+
+function AuthenticatedApp({ session }: { session: Session }) {
   const [practitionerSettings, setPractitionerSettings] = useState<PractitionerSettings>(
     emptyPractitionerSettings,
   );
@@ -86,7 +117,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    void refreshSubmissions();
+    void migrateLocalSubmissionsToAccount()
+      .then(refreshSubmissions)
+      .catch((error: unknown) => {
+        setPersistenceError(error instanceof Error ? error.message : 'Unable to load saved requests.');
+      });
   }, []);
 
   useEffect(() => {
@@ -158,6 +193,10 @@ export default function App() {
       window.localStorage.setItem('ahtr-sidebar-collapsed', String(next));
       return next;
     });
+  }
+
+  async function signOut() {
+    await getSupabaseClient()?.auth.signOut();
   }
 
   function reviewForm() {
@@ -233,6 +272,8 @@ export default function App() {
         collapsed={sidebarCollapsed}
         onNavigate={setScreen}
         onToggle={toggleSidebar}
+        onSignOut={() => void signOut()}
+        userEmail={session.user.email ?? 'Signed in'}
       >
         <HomeScreen
           practiceState={practitionerSettings.practiceState}
@@ -254,6 +295,8 @@ export default function App() {
         collapsed={sidebarCollapsed}
         onNavigate={setScreen}
         onToggle={toggleSidebar}
+        onSignOut={() => void signOut()}
+        userEmail={session.user.email ?? 'Signed in'}
       >
         <SettingsScreen
           settings={practitionerSettings}

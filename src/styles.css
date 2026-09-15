@@ -1698,3 +1698,36 @@ dd {
     grid-template-columns: 1fr;
   }
 }
+/* Demo authentication */
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f4f7f5;
+}
+
+.auth-card {
+  width: min(100%, 460px);
+  padding: 40px;
+  border: 1px solid #d8e1dc;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(19, 50, 40, 0.08);
+}
+
+.auth-brand { color: #176b57; font-weight: 800; letter-spacing: .08em; }
+.auth-card h1 { margin: 14px 0 8px; }
+.auth-card > p { color: #53635d; }
+.auth-card form { display: grid; gap: 18px; margin: 28px 0 18px; }
+.auth-card label { display: grid; gap: 8px; font-weight: 700; }
+.auth-card input { min-height: 48px; padding: 0 14px; border: 1px solid #aebdb6; border-radius: 9px; font: inherit; }
+.auth-card .primary-action { justify-content: center; }
+.auth-message { color: #176b57 !important; }
+.auth-error { color: #b42318 !important; }
+.auth-card small { display: block; color: #697872; }
+
+.sidebar-account { margin-top: auto; display: grid; gap: 8px; padding: 14px; border-top: 1px solid rgba(255,255,255,.16); }
+.sidebar-account > span { overflow: hidden; text-overflow: ellipsis; font-size: 12px; opacity: .75; }
+.sidebar-account button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.app-shell--collapsed .sidebar-account > span, .app-shell--collapsed .sidebar-account button span { display: none; }
