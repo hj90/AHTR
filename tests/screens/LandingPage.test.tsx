@@ -10,10 +10,10 @@ describe('LandingPage', () => {
     expect(onEnterApp).toHaveBeenCalledOnce();
   });
 
-  it('uses only the currently supported state schemes', () => {
+  it('renders the design handoff scheme list verbatim', () => {
     render(<LandingPage onEnterApp={vi.fn()} />);
     expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('SIRA NSW');
     expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('WorkCover WA');
-    expect(screen.queryByText('NT WorkSafe')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('NT WorkSafe');
   });
 });

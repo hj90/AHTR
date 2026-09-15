@@ -42,7 +42,7 @@
 .marketing-actions,.marketing-hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
 .marketing-primary,.marketing-secondary { min-height:38px; padding:9px 16px; border-radius:7px; font:650 13.5px inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 .marketing-primary { border:1px solid #0a514d; background:#0f766e; color:#fff; }
-.marketing-primary:hover { background:#0a514d; }
+.marketing-primary:hover { background:#0a514d; color:#fff; text-decoration:none; }
 .marketing-secondary { border:1px solid #cfd8d4; background:#fff; color:#16211f; }
 .marketing-secondary:hover { border-color:#0f766e; color:#0a514d; text-decoration:none!important; }
 .marketing-primary--large,.marketing-secondary--large { min-height:46px; padding:12px 22px; font-size:15px; }
@@ -78,7 +78,23 @@
 .draft-heading { display:flex; justify-content:space-between; margin-bottom:12px; color:#52615d; font-size:12.5px; }.draft-heading b{text-transform:uppercase;font-size:11px;letter-spacing:.08em}
 .draft-example-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(182px,100%),1fr)); gap:clamp(14px,2.4vw,26px); }.draft-example-grid>div{display:grid;gap:3px;padding-top:13px;border-top:2px solid #cfd8d4}.draft-example-grid>div.is-active{border-color:#0f766e}.draft-example-grid code{color:#0a514d;font-size:12px}.draft-example-grid span{margin-top:6px;color:#52615d;font-size:12.5px}.draft-example-grid small{font-size:13px}.draft-example-grid .is-active small{color:#0a514d;font-weight:700}
 .trust-grid { grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr)); }
+.compliance-intro { max-width:64ch; }
+.compliance-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(258px,100%),1fr)); gap:16px; }
+.compliance-card { display:grid; gap:12px; align-content:start; min-width:0; padding:18px 18px 20px; border:1px solid #cfd8d4; border-top:2px solid #0f766e; border-radius:8px; background:#fff; }
+.compliance-card h3 { margin:0; font-size:17px; line-height:1.2; font-weight:750; }
+.compliance-card>div { display:grid; gap:9px; }
+.compliance-card p { display:flex; gap:9px; align-items:flex-start; margin:0; color:#52615d; font-size:13.5px; line-height:1.55; }
+.compliance-card p i { flex:none; width:6px; height:6px; margin-top:7px; border-radius:50%; background:#0f766e; }
+.marketing-start { padding:clamp(28px,4vw,54px) 0; border-top:1px solid #cfd8d4; }
 .marketing-cta { display:grid; grid-template-columns:repeat(auto-fit,minmax(236px,1fr)); align-items:center; gap:clamp(20px,3vw,40px); margin:clamp(28px,4vw,54px) 0; padding:clamp(18px,3.2vw,38px); border-radius:10px; background:#0a514d; color:#fff; box-shadow:0 18px 38px rgba(21,35,31,.16); }.marketing-cta p{max-width:44ch;color:#cfe7e3;line-height:1.6}.marketing-cta button{justify-self:start;min-height:46px;padding:12px 22px;border:1px solid #fff;border-radius:7px;background:#fff;color:#0a514d;font-size:15px;font-weight:700;cursor:pointer}.marketing-cta button:hover{background:#e7edea}
+.marketing-start .marketing-cta { margin:0; }
+.marketing-cta form { display:grid; gap:5px; align-content:start; }
+.marketing-cta form label { margin-top:7px; color:#cfe7e3; font-size:12.5px; font-weight:650; }
+.marketing-cta form label:first-child { margin-top:0; }
+.marketing-cta form input,.marketing-cta form select { width:100%; min-height:42px; padding:10px 12px; border:1px solid rgba(255,255,255,.4); border-radius:7px; background:rgba(255,255,255,.1); color:#fff; font-size:14px; }
+.marketing-cta form input::placeholder { color:#a8cfca; opacity:1; }
+.marketing-cta form select option { color:#16211f; }
+.marketing-cta form button { margin-top:7px; }
 .marketing-footer { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:24px; padding-top:clamp(24px,3.6vw,42px); padding-bottom:clamp(24px,3.6vw,42px); border-top:1px solid #cfd8d4; }.marketing-footer>div{display:grid;align-content:start;gap:7px}.marketing-footer b{margin-bottom:3px;color:#52615d;font-size:11px;letter-spacing:.08em;text-transform:uppercase}.marketing-footer a,.marketing-footer button{justify-self:start;border:0;padding:0;background:none;font:inherit;color:inherit;cursor:pointer;font-size:13.5px}.marketing-footer div p{max-width:30ch;color:#52615d;font-size:13px;line-height:1.55}.marketing-footer>p{grid-column:1/-1;padding-top:16px;border-top:1px solid #cfd8d4;color:#52615d;font-size:12.5px}
 @keyframes ahtrRise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@keyframes ahtrFill{from{width:0}to{width:100%}}@keyframes ahtrLoop{0%,92%{opacity:1}97%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.marketing-page *{animation:none!important;opacity:1!important}}
