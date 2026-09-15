@@ -78,13 +78,13 @@ describe('practitioner settings store', () => {
     await expect(loadPractitionerSettings()).resolves.toEqual(emptyPractitionerSettings);
   });
 
-  it('upserts practitioner settings against the signed-in user', async () => {
+  it('inserts clinic details before upserting new practitioner settings', async () => {
     const signedInUserId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const generatedClinicId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
     const randomUuid = vi
       .spyOn(crypto, 'randomUUID')
       .mockReturnValueOnce(generatedClinicId);
-    const clinicUpsert = vi.fn().mockResolvedValue({ error: null });
+    const clinicInsert = vi.fn().mockResolvedValue({ error: null });
     const practitionerSingle = vi.fn().mockResolvedValue({
       data: {
         id: signedInUserId,
@@ -104,7 +104,7 @@ describe('practitioner settings store', () => {
     const practitionerSelect = vi.fn(() => ({ eq: existingPractitionerEq }));
     const practitionerUpsert = vi.fn(() => ({ select: () => ({ single: practitionerSingle }) }));
     const from = vi.fn((table: string) => {
-      if (table === 'clinics') return { upsert: clinicUpsert };
+      if (table === 'clinics') return { insert: clinicInsert };
       return { select: practitionerSelect, upsert: practitionerUpsert };
     });
     getSupabaseClientMock.mockReturnValue({ from } as never);
@@ -119,11 +119,10 @@ describe('practitioner settings store', () => {
 
     expect(from).not.toHaveBeenCalledWith('users');
     expect(existingPractitionerEq).toHaveBeenCalledWith('id', signedInUserId);
-    expect(clinicUpsert).toHaveBeenCalledWith(
+    expect(clinicInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: generatedClinicId,
       }),
-      { onConflict: 'id' },
     );
     expect(practitionerUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -134,6 +133,72 @@ describe('practitioner settings store', () => {
       { onConflict: 'id' },
     );
     randomUuid.mockRestore();
+  });
+
+  it('updates existing clinic details before upserting existing practitioner settings', async () => {
+    const signedInUserId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const existingClinicId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const clinicUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const clinicUpdate = vi.fn(() => ({ eq: clinicUpdateEq }));
+    const practitionerSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: signedInUserId,
+        clinic_id: existingClinicId,
+        name: 'Alex Clinician',
+        ahpra_number: '',
+        discipline: '',
+        sira_approval_number: '',
+        email: '',
+        preferred_contact_time: '',
+        signature: '',
+      },
+      error: null,
+    });
+    const existingPractitionerMaybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: signedInUserId,
+        clinic_id: existingClinicId,
+        name: '',
+        ahpra_number: '',
+        discipline: '',
+        sira_approval_number: '',
+        email: '',
+        preferred_contact_time: '',
+        signature: '',
+      },
+      error: null,
+    });
+    const existingPractitionerEq = vi.fn(() => ({ maybeSingle: existingPractitionerMaybeSingle }));
+    const practitionerSelect = vi.fn(() => ({ eq: existingPractitionerEq }));
+    const practitionerUpsert = vi.fn(() => ({ select: () => ({ single: practitionerSingle }) }));
+    const from = vi.fn((table: string) => {
+      if (table === 'clinics') return { update: clinicUpdate };
+      return { select: practitionerSelect, upsert: practitionerUpsert };
+    });
+    getSupabaseClientMock.mockReturnValue({ from } as never);
+
+    await savePractitionerSettings(
+      {
+        ...emptyPractitionerSettings,
+        practitionerName: 'Alex Clinician',
+      },
+      signedInUserId,
+    );
+
+    expect(clinicUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: existingClinicId,
+      }),
+    );
+    expect(clinicUpdateEq).toHaveBeenCalledWith('id', existingClinicId);
+    expect(practitionerUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: signedInUserId,
+        clinic_id: existingClinicId,
+        name: 'Alex Clinician',
+      }),
+      { onConflict: 'id' },
+    );
   });
 
   it('deletes the demo practitioner settings row', async () => {

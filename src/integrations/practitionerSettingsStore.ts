@@ -79,18 +79,24 @@ export async function savePractitionerSettings(
     .maybeSingle<PractitionerSettingsTableRow>();
 
   if (existingPractitionerResult.error) {
-    throw new Error('Unable to save practitioner settings to Supabase.');
+    throw practitionerSettingsError('save practitioner settings', existingPractitionerResult.error);
   }
 
-  const clinicId = existingPractitionerResult.data?.clinic_id ?? createUuid();
+  const existingPractitioner = existingPractitionerResult.data;
+  const clinicId = existingPractitioner?.clinic_id ?? createUuid();
 
   const clinicRow = settingsToClinicRow(settings, clinicId);
-  const clinicResult = await supabase
-    .from('clinics')
-    .upsert(clinicRow, { onConflict: 'id' });
+  const clinicResult = existingPractitioner
+    ? await supabase
+      .from('clinics')
+      .update(clinicRow)
+      .eq('id', clinicRow.id)
+    : await supabase
+      .from('clinics')
+      .insert(clinicRow);
 
   if (clinicResult.error) {
-    throw new Error('Unable to save practitioner settings to Supabase.');
+    throw practitionerSettingsError('save clinic details', clinicResult.error);
   }
 
   const practitionerResult = await supabase
@@ -100,7 +106,7 @@ export async function savePractitionerSettings(
     .single<PractitionerSettingsTableRow>();
 
   if (practitionerResult.error) {
-    throw new Error('Unable to save practitioner settings to Supabase.');
+    throw practitionerSettingsError('save practitioner details', practitionerResult.error);
   }
 
   return clinicAndPractitionerRowsToSettings(clinicRow, practitionerResult.data);
@@ -126,4 +132,9 @@ function requireSupabaseClient() {
   }
 
   return supabase;
+}
+
+function practitionerSettingsError(operation: string, error: { message?: string }) {
+  const detail = error.message ? ` ${error.message}` : '';
+  return new Error(`Unable to save practitioner settings to Supabase (${operation}).${detail}`);
 }
