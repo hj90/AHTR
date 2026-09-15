@@ -17,7 +17,7 @@ The most important architectural principle is:
 
 > **Patient/form data must never leave the user's browser in V1.**
 
-The product is intended as a low-cost prototype for validation. Expected usage is approximately **200 completed forms per month**, so the architecture should be intentionally simple and inexpensive.
+The product is intended as a low-cost build for validation. Expected usage is approximately **200 completed forms per month**, so the architecture should be intentionally simple and inexpensive.
 
 ---
 
@@ -27,7 +27,7 @@ The goal of V1 is to validate whether allied health providers find it meaningful
 
 This is not intended to be a practice-management system, patient-record system, document-management system, or AI assistant in V1.
 
-The prototype should optimise for:
+The V1 build should optimise for:
 
 - simplicity;
 - speed;
@@ -751,7 +751,7 @@ Use short, factual privacy copy.
 
 Suggested message near the form start:
 
-> Information entered into this form is processed in your browser to create the PDF. This prototype does not save the information you enter or the completed PDF.
+> Information entered into this form is processed in your browser to create the PDF. This build does not save the information you enter or the completed PDF.
 
 Suggested message on completion:
 
@@ -813,7 +813,7 @@ Do not configure one-time PIN access in a way that allows any arbitrary email ad
 
 The policy must explicitly restrict who is permitted.
 
-For the initial prototype, prefer individual approved emails rather than a broad public rule.
+For the initial build, prefer individual approved emails rather than a broad public rule.
 
 ---
 
@@ -1129,7 +1129,7 @@ Do not introduce backend infrastructure for perceived performance unless browser
 
 ## 29. V1 operating-cost target
 
-The architecture should be compatible with a very low or effectively zero monthly infrastructure cost at prototype usage levels.
+The architecture should be compatible with a very low or effectively zero monthly infrastructure cost at V1 usage levels.
 
 Expected components:
 

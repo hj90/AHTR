@@ -1,6 +1,6 @@
 # Privacy Architecture
 
-This document describes the technical data flow for the current prototype. It is not a legal policy.
+This document describes the technical data flow for the current build. It is not a legal policy.
 
 ## Data That Enters The Application
 
@@ -32,5 +32,5 @@ Users can permanently delete saved requests from the home screen.
 
 ## Operational Requirements
 
-- Browser storage is intended for prototype and synthetic test data. It is not suitable for reliable cross-device storage or long-term retention of real patient records.
+- Browser storage is intended for development and synthetic test data. It is not suitable for reliable cross-device storage or long-term retention of real patient records.
 - Moving submissions to Supabase later will require authenticated ownership, row-level security and an explicit retention policy.

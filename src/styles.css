@@ -51,8 +51,12 @@
 .marketing-hero h1 { margin:0 0 16px; font-size:clamp(36px,5.2vw,56px); line-height:1.04; letter-spacing:-.02em; font-weight:800; text-wrap:balance; }
 .marketing-lead { max-width:48ch; margin:0 0 22px; color:#52615d; font-size:16.5px; line-height:1.6; }
 .marketing-hero-actions { margin-bottom:22px; }
+.scheme-rows { display:grid; gap:12px; }
+.scheme-row-label { margin:0 0 6px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#52615d; }
+.scheme-row--muted .scheme-row-label { color:#8a9793; }
 .scheme-badges { display:flex; gap:7px; flex-wrap:wrap; }
 .scheme-badges span { padding:4px 9px; border:1px solid #c3d0d8; border-radius:5px; background:#e6edf1; color:#2f4a5a; font-size:11.5px; font-weight:650; }
+.scheme-badges--muted span { border-style:dashed; background:transparent; color:#7c8c88; font-weight:600; }
 .workflow-figure { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr)); gap:10px; margin:0; }
 .workflow-panel { min-width:0; display:grid; gap:10px; align-content:start; padding:13px 14px 15px; border:1px solid #cfd8d4; border-top:2px solid #0f766e; border-radius:8px; background:#fff; }
 .workflow-panel>b { display:flex; gap:7px; color:#52615d; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; }
@@ -76,6 +80,7 @@
 .marketing-split { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(296px,100%),1fr)); gap:clamp(20px,3vw,38px); }
 .start-options { padding:20px; border:1px solid #cfd8d4; border-radius:8px; background:#fff; }.start-options h3{margin:0 0 13px;font-size:15px}.start-options>div{display:flex;gap:11px;padding:12px 13px;border:1px solid #cfd8d4;border-radius:7px;margin-top:10px}.start-options i{flex:none;width:9px;height:9px;margin-top:6px;border-radius:50%;background:#0f766e}.start-options span,.start-options small{display:block}.start-options b{font-size:14px}.start-options small{margin-top:3px;color:#52615d;font-size:13px;line-height:1.5}
 .draft-heading { display:flex; justify-content:space-between; margin-bottom:12px; color:#52615d; font-size:12.5px; }.draft-heading b{text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+.sample-data-tag { margin:0 0 14px; font-size:11px; font-weight:650; letter-spacing:.05em; text-transform:uppercase; color:#8a9793; }
 .draft-example-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(182px,100%),1fr)); gap:clamp(14px,2.4vw,26px); }.draft-example-grid>div{display:grid;gap:3px;padding-top:13px;border-top:2px solid #cfd8d4}.draft-example-grid>div.is-active{border-color:#0f766e}.draft-example-grid code{color:#0a514d;font-size:12px}.draft-example-grid span{margin-top:6px;color:#52615d;font-size:12.5px}.draft-example-grid small{font-size:13px}.draft-example-grid .is-active small{color:#0a514d;font-weight:700}
 .trust-grid { grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr)); }
 .compliance-intro { max-width:64ch; }
@@ -95,6 +100,7 @@
 .marketing-cta form input::placeholder { color:#a8cfca; opacity:1; }
 .marketing-cta form select option { color:#16211f; }
 .marketing-cta form button { margin-top:7px; }
+.pricing-note { margin:6px 0 0; color:#a8cfca; font-size:12.5px; }
 .marketing-footer { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:24px; padding-top:clamp(24px,3.6vw,42px); padding-bottom:clamp(24px,3.6vw,42px); border-top:1px solid #cfd8d4; }.marketing-footer>div{display:grid;align-content:start;gap:7px}.marketing-footer b{margin-bottom:3px;color:#52615d;font-size:11px;letter-spacing:.08em;text-transform:uppercase}.marketing-footer a,.marketing-footer button{justify-self:start;border:0;padding:0;background:none;font:inherit;color:inherit;cursor:pointer;font-size:13.5px}.marketing-footer div p{max-width:30ch;color:#52615d;font-size:13px;line-height:1.55}.marketing-footer>p{grid-column:1/-1;padding-top:16px;border-top:1px solid #cfd8d4;color:#52615d;font-size:12.5px}
 @keyframes ahtrRise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@keyframes ahtrFill{from{width:0}to{width:100%}}@keyframes ahtrLoop{0%,92%{opacity:1}97%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.marketing-page *{animation:none!important;opacity:1!important}}

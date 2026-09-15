@@ -1,6 +1,6 @@
 # Allied Health PDF Filler - Local v0
 
-This is a local-only prototype for filling predefined allied health PDF forms in the browser. It lets a clinician start the SIRA Allied Health Treatment Request form, enter values through normal web fields, review them, generate a completed PDF with `pdf-lib`, and download it.
+This is a local-only build for filling predefined allied health PDF forms in the browser. It lets a clinician start the SIRA Allied Health Treatment Request form, enter values through normal web fields, review them, generate a completed PDF with `pdf-lib`, and download it.
 
 ## Local-Only Scope
 

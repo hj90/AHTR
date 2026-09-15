@@ -10,10 +10,10 @@ describe('LandingPage', () => {
     expect(onEnterApp).toHaveBeenCalledOnce();
   });
 
-  it('renders the design handoff scheme list verbatim', () => {
+  it('shows only shipped forms as supported, with upcoming forms called out separately', () => {
     render(<LandingPage onEnterApp={vi.fn()} />);
-    expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('SIRA NSW');
-    expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('WorkCover WA');
-    expect(screen.getByLabelText('Supported schemes')).toHaveTextContent('NT WorkSafe');
+    expect(screen.getByLabelText('Forms supported')).toHaveTextContent('SIRA allied health treatment request (SIRA09191)');
+    expect(screen.getByLabelText('Coming next')).toHaveTextContent('WorkSafe Victoria AHRMP');
+    expect(screen.getByLabelText('Coming next')).toHaveTextContent('WorkCover Queensland PMP');
   });
 });
